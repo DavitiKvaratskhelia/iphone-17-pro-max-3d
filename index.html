@@ -155,6 +155,100 @@
   #error h2 { margin: 0; font-size: 18px; font-weight: 600; }
   #error p { margin: 0; max-width: 460px; font-size: 14px; line-height: 1.6; color: var(--muted); }
 
+  /* ── Zoom slider (−3 … +3) ── */
+  .zoom {
+    --pad: 36px;
+    --accent-a: #ff9a5c;
+    --accent-b: #ee5a2a;
+    position: fixed;
+    right: max(26px, env(safe-area-inset-right));
+    top: 50%;
+    transform: translateY(-50%);
+    width: 96px; height: clamp(190px, calc(100vh - 210px), 320px);
+    user-select: none;
+  }
+  .zoom-num {
+    position: absolute; right: 2px; top: 50%;
+    transform: translateY(-56%);
+    font-size: clamp(84px, 16vh, 132px); font-weight: 300; line-height: 1;
+    letter-spacing: -0.04em;
+    color: rgba(255, 255, 255, 0.035);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+    white-space: nowrap;
+    transition: color 0.3s;
+  }
+  .zoom.active .zoom-num { color: rgba(255, 255, 255, 0.06); }
+  .zoom-ticks { position: absolute; left: 4px; top: var(--pad); bottom: var(--pad); width: 16px; pointer-events: none; }
+  .zoom-ticks i {
+    position: absolute; left: 0; height: 2px; width: 8px; margin-top: -1px;
+    border-radius: 1px;
+    background: rgba(255, 255, 255, 0.2);
+    transition: background 0.15s;
+  }
+  .zoom-ticks i.major { width: 14px; }
+  .zoom-ticks i.on { background: var(--accent-b); }
+  .zoom-ticks i.zero { background: rgba(255, 255, 255, 0.55); }
+  .zoom-hit {
+    position: absolute; left: 20px; width: 50px;
+    top: var(--pad); bottom: var(--pad);
+    cursor: pointer;
+    touch-action: none;
+    outline: none;
+  }
+  .zoom-track {
+    position: absolute; left: 50%; top: 0; bottom: 0;
+    width: 10px; margin-left: -5px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+  .zoom-fill {
+    position: absolute; left: 0; right: 0; top: 50%; height: 0;
+    border-radius: 6px;
+    background: linear-gradient(180deg, var(--accent-a), var(--accent-b));
+    box-shadow: 0 0 12px rgba(238, 90, 42, 0.35);
+  }
+  .zoom-thumb {
+    position: absolute; left: 50%; top: 50%;
+    width: 38px; height: 58px;
+    transform: translate(-50%, -50%);
+    border-radius: 19px;
+    background: linear-gradient(155deg, #fbfbfc 0%, #e4e6ea 55%, #cfd2d8 100%);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 -2px 4px rgba(0, 0, 0, 0.08) inset;
+    cursor: grab;
+    transition: box-shadow 0.2s;
+  }
+  .zoom-thumb::after {
+    content: ""; position: absolute; left: 50%; top: 50%;
+    width: 14px; height: 14px; margin: -7px 0 0 -7px;
+    border-radius: 50%;
+    background: linear-gradient(160deg, #eef0f3, #dcdfe4);
+    box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.15) inset;
+  }
+  .zoom.active .zoom-thumb { cursor: grabbing; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 0 4px rgba(238, 90, 42, 0.25), 0 1px 0 rgba(255, 255, 255, 0.9) inset; }
+  .zoom-hit:focus-visible .zoom-thumb { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 0 2px #121316, 0 0 0 4px var(--accent); }
+  .zoom-lab {
+    position: absolute; left: 76px;
+    transform: translateY(-50%);
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    color: var(--muted);
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .zoom-lab.top { top: var(--pad); }
+  .zoom-lab.mid { top: 50%; }
+  .zoom-lab.bot { top: calc(100% - var(--pad)); }
+
+  @media (max-width: 640px) {
+    .zoom { right: max(8px, env(safe-area-inset-right)); width: 66px; height: 236px; top: calc(50% - 50px); --pad: 30px; }
+    .zoom-num { display: none; }
+    .zoom-ticks { left: 0; }
+    .zoom-hit { left: 8px; width: 44px; }
+    .zoom-thumb { width: 32px; height: 48px; border-radius: 16px; }
+    .zoom-lab { left: 52px; font-size: 10px; letter-spacing: 0.02em; }
+  }
+
   @media (max-width: 640px) {
     .dock {
       display: grid;
@@ -192,6 +286,19 @@
   <button data-color="deepBlue" style="--sw:#3b4763" aria-pressed="true" title="Deep Blue" aria-label="Deep Blue"></button>
   <button data-color="cosmicOrange" style="--sw:#d4703a" aria-pressed="false" title="Cosmic Orange" aria-label="Cosmic Orange"></button>
   <button data-color="silver" style="--sw:#d9dadc" aria-pressed="false" title="Silver" aria-label="Silver"></button>
+</div>
+
+<div class="zoom" id="zoom">
+  <div class="zoom-num" id="zoom-num" aria-hidden="true">0</div>
+  <div class="zoom-ticks" id="zoom-ticks" aria-hidden="true"></div>
+  <div class="zoom-hit" id="zoom-hit" role="slider" tabindex="0" aria-label="მასშტაბი" aria-orientation="vertical"
+       aria-valuemin="-3" aria-valuemax="3" aria-valuenow="0" aria-valuetext="0">
+    <div class="zoom-track"><div class="zoom-fill" id="zoom-fill"></div></div>
+    <div class="zoom-thumb" id="zoom-thumb"></div>
+  </div>
+  <span class="zoom-lab top" aria-hidden="true">+3</span>
+  <span class="zoom-lab mid" aria-hidden="true">0</span>
+  <span class="zoom-lab bot" aria-hidden="true">−3</span>
 </div>
 
 <div class="hint" id="hint">გადაათრიეთ დასატრიალებლად · მასშტაბი: ბორბალი ან ორი თითი</div>
@@ -926,6 +1033,105 @@ float antennaMask() {
   setAuto(autoRotate);
   function setActive(name) { viewBtns.forEach(b => b.classList.toggle('active', b.dataset.view === name)); }
 
+  // ── Zoom slider: level −3 (farthest) … 0 (default framing) … +3 (closest).
+  // Level ↔ zoom factor is exponential, so each step feels the same; it stays in sync with wheel / pinch / keys.
+  const LEVEL_MAX = 3;
+  const zoomFromLevel = (v) => (v >= 0 ? Math.pow(ZOOM_MIN, v / LEVEL_MAX) : Math.pow(ZOOM_MAX, -v / LEVEL_MAX));
+  const levelFromZoom = (z) => (z <= 1 ? LEVEL_MAX * Math.log(z) / Math.log(ZOOM_MIN) : -LEVEL_MAX * Math.log(z) / Math.log(ZOOM_MAX));
+  const zoomEl = document.getElementById('zoom');
+  const zoomHit = document.getElementById('zoom-hit');
+  const zoomThumb = document.getElementById('zoom-thumb');
+  const zoomFill = document.getElementById('zoom-fill');
+  const zoomNum = document.getElementById('zoom-num');
+  const ticksEl = document.getElementById('zoom-ticks');
+  const ticks = [];
+  for (let i = 0; i <= 24; i++) {
+    const v = LEVEL_MAX - i * 0.25;
+    const t = document.createElement('i');
+    if (Number.isInteger(v)) t.classList.add('major');
+    if (v === 0) t.classList.add('zero');
+    t.style.top = (i / 24 * 100) + '%';
+    ticksEl.appendChild(t);
+    ticks.push({ el: t, v });
+  }
+  const fmtLevel = (v) => {
+    const r = Math.round(v * 100) / 100;
+    if (Math.abs(r) < 0.005) return '0';
+    const s = String(Math.abs(r));
+    return (r > 0 ? '+' : '−') + s;
+  };
+  let shownLevel = NaN;
+  function renderZoomUI(level) {
+    const v = clamp(Math.round(level * 100) / 100, -LEVEL_MAX, LEVEL_MAX);
+    if (v === shownLevel) return;
+    shownLevel = v;
+    const pos = (LEVEL_MAX - v) / (2 * LEVEL_MAX) * 100;   // % from top
+    zoomThumb.style.top = pos + '%';
+    zoomFill.style.top = Math.min(pos, 50) + '%';
+    zoomFill.style.height = Math.abs(pos - 50) + '%';
+    for (const t of ticks) {
+      const on = (v > 0 && t.v > 0 && t.v <= v + 1e-6) || (v < 0 && t.v < 0 && t.v >= v - 1e-6);
+      t.el.classList.toggle('on', on);
+    }
+    const txt = fmtLevel(v);
+    zoomNum.textContent = txt;
+    zoomHit.setAttribute('aria-valuenow', String(Math.round(v * 100) / 100));
+    zoomHit.setAttribute('aria-valuetext', txt);
+  }
+  function setLevel(v) {
+    v = clamp(v, -LEVEL_MAX, LEVEL_MAX);
+    if (Math.abs(v) < 0.12) v = 0;                         // soft detent at the default
+    state.tZoom = zoomFromLevel(Math.round(v * 20) / 20);   // 0.05 grid, so ¼-steps add up exactly
+    renderZoomUI(levelFromZoom(state.tZoom));
+    hideHint();
+  }
+
+  let zoomDrag = null;
+  zoomHit.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+    try { zoomHit.setPointerCapture(e.pointerId); } catch (err) { /* pointer already gone */ }
+    const tr = zoomThumb.getBoundingClientRect();
+    const onThumb = e.clientY >= tr.top && e.clientY <= tr.bottom;
+    zoomDrag = { id: e.pointerId, offset: onThumb ? e.clientY - (tr.top + tr.height / 2) : 0 };
+    zoomEl.classList.add('active');
+    zoomHit.focus({ preventScroll: true });
+    const r = zoomHit.getBoundingClientRect();
+    setLevel(LEVEL_MAX - ((e.clientY - zoomDrag.offset - r.top) / r.height) * 2 * LEVEL_MAX);
+  });
+  zoomHit.addEventListener('pointermove', (e) => {
+    if (!zoomDrag || e.pointerId !== zoomDrag.id) return;
+    const r = zoomHit.getBoundingClientRect();
+    setLevel(LEVEL_MAX - ((e.clientY - zoomDrag.offset - r.top) / r.height) * 2 * LEVEL_MAX);
+  });
+  const endZoomDrag = (e) => {
+    if (!zoomDrag || e.pointerId !== zoomDrag.id) return;
+    zoomDrag = null;
+    zoomEl.classList.remove('active');
+  };
+  zoomHit.addEventListener('pointerup', endZoomDrag);
+  zoomHit.addEventListener('pointercancel', endZoomDrag);
+  zoomHit.addEventListener('lostpointercapture', endZoomDrag);
+  zoomHit.addEventListener('dblclick', (e) => { e.stopPropagation(); setLevel(0); });
+  zoomHit.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    setLevel(levelFromZoom(state.tZoom) - Math.sign(e.deltaY) * 0.25);
+  }, { passive: false });
+  zoomHit.addEventListener('keydown', (e) => {
+    const cur = levelFromZoom(state.tZoom);
+    const map = { ArrowUp: 0.25, ArrowRight: 0.25, ArrowDown: -0.25, ArrowLeft: -0.25, PageUp: 1, PageDown: -1 };
+    let next = null;
+    if (e.key in map) next = cur + map[e.key];
+    else if (e.key === 'Home') next = LEVEL_MAX;
+    else if (e.key === 'End') next = -LEVEL_MAX;
+    else if (e.key === '0') next = 0;
+    if (next === null) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setLevel(next);
+  });
+  renderZoomUI(0);
+
   function goTo(name) {
     const v = VIEWS[name];
     const cy = state.yaw;
@@ -1061,6 +1267,7 @@ float antennaMask() {
       state.pitch += (state.tPitch - state.pitch) * f;
     }
     state.zoom += (state.tZoom - state.zoom) * (1 - Math.exp(-dt * 9));
+    if (!zoomDrag) renderZoomUI(levelFromZoom(state.tZoom));   // reflect wheel / pinch / view resets
 
     // Keep angles bounded without visible jumps.
     if (Math.abs(state.yaw) > 1000 && !tween) {
