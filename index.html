@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#121316">
+<meta name="theme-color" content="#ff5000">
 <title>iPhone 17 Pro Max — 3D</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,7 +11,9 @@
 <style>
   /* ── Theme tokens. Dark is the default; [data-theme="light"] overrides. ── */
   :root {
-    --theme-dur: 240ms;
+    --theme-dur: 240ms;      /* UI colour changes */
+    --bg-dur: 850ms;         /* backdrop cross-fade between modes */
+    --zoommer: #ff5000;      /* official Zoommer orange (brand logo SVG) */
     --fg: #ecedf0;
     --muted: rgba(236, 237, 240, 0.55);
     --panel: rgba(30, 32, 37, 0.58);
@@ -76,6 +78,36 @@
     --spinner-track: rgba(20, 22, 28, 0.12);
     color-scheme: light;
   }
+  :root[data-theme="zoommer"] {
+    --fg: #ffffff;
+    --muted: rgba(255, 255, 255, 0.8);
+    --panel: rgba(112, 34, 0, 0.24);
+    --line: rgba(255, 255, 255, 0.2);
+    --accent: #ffffff;
+    --glass-bg: rgba(96, 28, 0, 0.34);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --glass-shadow: 0 14px 40px rgba(96, 26, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    --ctl-icon: rgba(255, 255, 255, 0.9);
+    --ctl-icon-hover: #ffffff;
+    --ctl-hover-bg: rgba(255, 255, 255, 0.14);
+    --ctl-active-bg: #ffffff;
+    --ctl-active-icon: #1c1d21;
+    --ctl-active-shadow: 0 3px 12px rgba(110, 30, 0, 0.3);
+    --sep: rgba(255, 255, 255, 0.32);
+    --track: rgba(255, 255, 255, 0.26);
+    --tick: rgba(255, 255, 255, 0.45);
+    --tick-zero: #ffffff;
+    --num: rgba(255, 255, 255, 0.07);
+    --num-active: rgba(255, 255, 255, 0.11);
+    --swatch-border: rgba(255, 255, 255, 0.55);
+    --ring-gap: #ff5a12;
+    --ring: #ffffff;
+    --spinner: #ffffff;
+    --spinner-track: rgba(255, 255, 255, 0.3);
+    color-scheme: dark;
+  }
+  /* On orange the slider's orange fill would vanish — switch it to white. */
+  :root[data-theme="zoommer"] .zoom { --accent-a: #ffffff; --accent-b: #ffe6d6; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; }
   body {
@@ -88,15 +120,94 @@
     -webkit-user-select: none;
     transition: color var(--theme-dur) ease;
   }
-  /* Light backdrop cross-fades over the dark one (gradients themselves can't be transitioned). */
+  /* Mode backdrops cross-fade over the dark base (gradients themselves can't be transitioned). */
   body::before {
     content: ""; position: fixed; inset: 0; z-index: -1;
     background: var(--page-bg-light);
     opacity: 0;
-    transition: opacity var(--theme-dur) ease;
+    transition: opacity var(--bg-dur) ease;
     pointer-events: none;
   }
   :root[data-theme="light"] body::before { opacity: 1; }
+
+  /* Zoommer studio: orange cyclorama — deep edges, soft centre light, broad overhead beam,
+     lit floor and a light haze. Pure gradients (no filters) so it stays cheap on phones. */
+  .zenv {
+    position: fixed; inset: -3%; z-index: -1;
+    opacity: 0;
+    transition: opacity var(--bg-dur) ease;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  :root[data-theme="zoommer"] .zenv { opacity: 1; }
+
+  /* Zoommer brand typography: a flat white HTML/SVG layer *behind* the transparent WebGL canvas.
+     The phone therefore always covers it, can never intersect it in 3D, and it never moves with the model.
+     Sizes / positions are set in px by layoutBrand() on resize only. */
+  .ztype {
+    position: fixed; inset: 0; z-index: -1;
+    opacity: 0;
+    transition: opacity var(--bg-dur) ease;
+    pointer-events: none;
+    color: #ffffff;
+    contain: strict;
+  }
+  :root[data-theme="zoommer"] .ztype { opacity: 1; }
+  .ztype > * { position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); }
+  .zt-line {
+    display: flex; align-items: center;
+    white-space: nowrap;
+    font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-weight: 500;
+    letter-spacing: -0.012em;
+    line-height: 1;
+    font-size: 100px;
+  }
+  /* Apple mark: about cap height + leaf, nudged so its body sits on the text's optical centre. */
+  .zt-apple { width: 0.64em; height: 0.8em; margin-right: 0.16em; fill: currentColor; transform: translateY(-0.05em); flex: none; }
+  .zt-pro, .zt-word { display: block; fill: #ffffff; overflow: visible; }
+  /* When the big words pass behind the zoom slider (narrow screens), back it with the bar's glass. */
+  .zoom::before {
+    content: ""; position: absolute; inset: 6px -6px; z-index: -1;
+    border-radius: 999px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: var(--glass-filter);
+    -webkit-backdrop-filter: var(--glass-filter);
+    box-shadow: var(--glass-shadow);
+    opacity: 0;
+    transition: opacity var(--bg-dur) ease;
+    pointer-events: none;
+  }
+  :root[data-theme="zoommer"].zt-under-slider .zoom::before { opacity: 1; }
+  .zenv > i { position: absolute; display: block; }
+  .zenv .z-base {
+    inset: 0;
+    background: radial-gradient(120% 95% at 50% 40%, #ff8538 0%, #ff5000 36%, #d84300 66%, #8c2900 100%);
+  }
+  .zenv .z-glow {
+    inset: 0;
+    background: radial-gradient(44% 40% at 50% 40%, rgba(255, 200, 156, 0.55) 0%, rgba(255, 164, 104, 0.18) 45%, rgba(255, 120, 60, 0) 75%);
+    transform: translate3d(calc(var(--px, 0) * 8px), calc(var(--py, 0) * 6px), 0);
+  }
+  .zenv .z-beam {
+    left: 50%; top: -14%;
+    width: 72vmax; height: 96vh; margin-left: -36vmax;
+    background: radial-gradient(50% 100% at 50% 0%, rgba(255, 242, 230, 0.34) 0%, rgba(255, 226, 202, 0.12) 42%, rgba(255, 210, 180, 0) 72%);
+    transform: translate3d(calc(var(--px, 0) * 20px), calc(var(--py, 0) * 10px), 0);
+  }
+  .zenv .z-floor {
+    left: -8%; right: -8%; bottom: 0; height: 48%;
+    background:
+      radial-gradient(60% 40% at 50% 44%, rgba(255, 216, 184, 0.46) 0%, rgba(255, 172, 122, 0.16) 46%, rgba(255, 120, 60, 0) 76%),
+      linear-gradient(180deg, rgba(255, 120, 50, 0) 0%, rgba(118, 32, 0, 0.3) 100%);
+    transform: translate3d(calc(var(--px, 0) * -14px), calc(var(--py, 0) * -5px), 0);
+  }
+  .zenv .z-fog {
+    inset: 0;
+    background: radial-gradient(85% 55% at 50% 64%, rgba(255, 234, 216, 0.16) 0%, rgba(255, 234, 216, 0) 70%);
+    transform: translate3d(calc(var(--px, 0) * 5px), 0, 0);
+  }
   /* Same glass material for every floating control surface. */
   .glass {
     height: 56px;
@@ -211,53 +322,55 @@
   .dock .seg-ind.show { opacity: 1; }
   .dock .sep { flex: none; width: 1px; height: 24px; margin: 0 2px; background: var(--sep); }
 
-  /* ── Light / Dark switch: same glass capsule as the bar, 96 × 56, sliding 40 px knob ── */
+  /* ── Theme switch: Light / Dark / Zoommer. Same glass capsule as the bar (shared .glass);
+        three equal 40 px slots and one 40 px knob sliding between them. 136 = 2 × (1 border + 7) + 3 × 40 ── */
   .theme-toggle {
     position: fixed; z-index: 5; left: 0; top: 0;
-    width: 96px;
-    appearance: none;
-    margin: 0;
-    color: var(--ctl-icon);
-    cursor: pointer;
-    touch-action: manipulation;
+    display: flex; align-items: center;
+    width: 136px;
+    padding: 7px;                  /* + 1 px border = 8 px from the outer edge, like the bar */
     visibility: hidden;            /* shown once JS has measured where it goes */
   }
   .theme-toggle.placed { visibility: visible; }
+  .theme-toggle .tt-knob {
+    position: absolute; left: 7px; top: 7px;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--ctl-active-bg);
+    box-shadow: var(--ctl-active-shadow);
+    transform: translateX(calc(var(--i, 1) * 40px));
+    transition: transform 260ms cubic-bezier(0.3, 0.7, 0.2, 1), background-color var(--theme-dur) ease, box-shadow var(--theme-dur) ease;
+    pointer-events: none;
+  }
+  .theme-toggle button {
+    position: relative; z-index: 1;
+    flex: none;
+    display: grid; place-items: center;
+    width: 40px; height: 40px; padding: 0; margin: 0;
+    appearance: none; border: 0; border-radius: 50%;
+    background: transparent;
+    color: var(--ctl-icon);
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: color 0.2s ease, background-color 0.18s ease, transform 0.18s ease;
+  }
+  .theme-toggle button:hover { color: var(--ctl-icon-hover); background: var(--ctl-hover-bg); }
+  .theme-toggle button[aria-checked="true"],
+  .theme-toggle button[aria-checked="true"]:hover { color: var(--ctl-active-icon); background: transparent; }
+  .theme-toggle button:active { transform: scale(0.92); }
+  .theme-toggle button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .theme-toggle svg {
     width: 20px; height: 20px;
     fill: none; stroke: currentColor; stroke-width: 1.6;
     stroke-linecap: round; stroke-linejoin: round;
     pointer-events: none;
   }
-  .theme-toggle .tt-icon {
-    position: absolute; top: 7px; width: 40px; height: 40px;
-    display: grid; place-items: center;
-    opacity: 0.75;
-    transition: opacity 0.2s ease, color var(--theme-dur) ease;
+  /* The filled, circular emblem reads heavier than line icons — 19 px matches their visual weight. */
+  .theme-toggle svg.zm { width: 19px; height: 19px; fill: currentColor; stroke: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .theme-toggle .tt-knob { transition-duration: 0.01ms; }
+    .zenv, .ztype, body::before { transition-duration: 200ms; }
   }
-  .theme-toggle .tt-icon.sun { left: 7px; }
-  .theme-toggle .tt-icon.moon { left: 47px; }
-  .theme-toggle:hover .tt-icon { opacity: 1; color: var(--ctl-icon-hover); }
-  .theme-toggle .tt-knob {
-    position: absolute; top: 7px; left: 7px;
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    display: grid; place-items: center;
-    color: var(--ctl-active-icon);
-    background: var(--ctl-active-bg);
-    box-shadow: var(--ctl-active-shadow);
-    transform: translateX(0);
-    transition: transform 230ms cubic-bezier(0.3, 0.7, 0.2, 1), background-color var(--theme-dur) ease, box-shadow var(--theme-dur) ease;
-  }
-  .theme-toggle[aria-checked="true"] .tt-knob { transform: translateX(40px); }
-  .theme-toggle:active .tt-knob { width: 44px; }
-  .theme-toggle[aria-checked="true"]:active .tt-knob { transform: translateX(36px); }
-  .theme-toggle .tt-knob svg { position: absolute; transition: opacity 220ms ease, transform 230ms cubic-bezier(0.3, 0.7, 0.2, 1); }
-  .theme-toggle .k-sun { opacity: 1; transform: rotate(0deg) scale(1); }
-  .theme-toggle .k-moon { opacity: 0; transform: rotate(-60deg) scale(0.6); }
-  .theme-toggle[aria-checked="true"] .k-sun { opacity: 0; transform: rotate(60deg) scale(0.6); }
-  .theme-toggle[aria-checked="true"] .k-moon { opacity: 1; transform: rotate(0deg) scale(1); }
-  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   :root.theme-stacked .hint { bottom: calc(160px + env(safe-area-inset-bottom)); }
   .dock button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
@@ -284,7 +397,9 @@
     bottom: calc(94px + env(safe-area-inset-bottom));
     transform: translateX(-50%);
     font-size: 12px; color: var(--muted);
-    white-space: nowrap;
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    text-align: center;
     pointer-events: none;
     transition: opacity 0.8s;
   }
@@ -298,6 +413,7 @@
     transition: opacity 0.7s;
   }
   :root[data-theme="light"] #loader, :root[data-theme="light"] #error { background: var(--page-bg-light); }
+  :root[data-theme="zoommer"] #loader, :root[data-theme="zoommer"] #error { background: radial-gradient(120% 95% at 50% 40%, #ff8538 0%, #ff5000 40%, #b33800 100%); }
   #loader.done { opacity: 0; pointer-events: none; }
   .spinner {
     width: 34px; height: 34px; border-radius: 50%;
@@ -320,7 +436,7 @@
     right: max(26px, env(safe-area-inset-right));
     top: 50%;
     transform: translateY(-50%);
-    width: 96px; height: clamp(190px, calc(100vh - 210px), 320px);
+    width: 67px; height: clamp(190px, calc(100vh - 210px), 320px);
     user-select: none;
   }
   .zoom-num {
@@ -335,18 +451,18 @@
     transition: color 0.3s;
   }
   .zoom.active .zoom-num { color: var(--num-active); }
-  .zoom-ticks { position: absolute; left: 4px; top: var(--pad); bottom: var(--pad); width: 16px; pointer-events: none; }
+  .zoom-ticks { position: absolute; left: 2px; top: var(--pad); bottom: var(--pad); width: 12px; pointer-events: none; }
   .zoom-ticks i {
-    position: absolute; left: 0; height: 2px; width: 8px; margin-top: -1px;
+    position: absolute; left: 0; height: 2px; width: 6px; margin-top: -1px;
     border-radius: 1px;
     background: var(--tick);
     transition: background 0.15s;
   }
-  .zoom-ticks i.major { width: 14px; }
+  .zoom-ticks i.major { width: 11px; }
   .zoom-ticks i.on { background: var(--accent-b); }
   .zoom-ticks i.zero { background: var(--tick-zero); }
   .zoom-hit {
-    position: absolute; left: 20px; width: 50px;
+    position: absolute; left: 14px; width: 36px;
     top: var(--pad); bottom: var(--pad);
     cursor: pointer;
     touch-action: none;
@@ -354,7 +470,7 @@
   }
   .zoom-track {
     position: absolute; left: 50%; top: 0; bottom: 0;
-    width: 10px; margin-left: -5px;
+    width: 8px; margin-left: -4px;
     border-radius: 6px;
     background: var(--track);
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -367,9 +483,9 @@
   }
   .zoom-thumb {
     position: absolute; left: 50%; top: 50%;
-    width: 38px; height: 58px;
+    width: 28px; height: 52px;
     transform: translate(-50%, -50%);
-    border-radius: 19px;
+    border-radius: 14px;
     background: linear-gradient(155deg, #fbfbfc 0%, #e4e6ea 55%, #cfd2d8 100%);
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 -2px 4px rgba(0, 0, 0, 0.08) inset;
     cursor: grab;
@@ -377,7 +493,7 @@
   }
   .zoom-thumb::after {
     content: ""; position: absolute; left: 50%; top: 50%;
-    width: 14px; height: 14px; margin: -7px 0 0 -7px;
+    width: 12px; height: 12px; margin: -6px 0 0 -6px;
     border-radius: 50%;
     background: linear-gradient(160deg, #eef0f3, #dcdfe4);
     box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.15) inset;
@@ -385,9 +501,9 @@
   .zoom.active .zoom-thumb { cursor: grabbing; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 0 4px rgba(238, 90, 42, 0.25), 0 1px 0 rgba(255, 255, 255, 0.9) inset; }
   .zoom-hit:focus-visible .zoom-thumb { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 0 2px #121316, 0 0 0 4px var(--accent); }
   .zoom-lab {
-    position: absolute; left: 76px;
+    position: absolute; left: 52px;
     transform: translateY(-50%);
-    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em;
     color: var(--muted);
     pointer-events: none;
     font-variant-numeric: tabular-nums;
@@ -397,12 +513,16 @@
   .zoom-lab.bot { top: calc(100% - var(--pad)); }
 
   @media (max-width: 640px) {
-    .zoom { right: max(8px, env(safe-area-inset-right)); width: 66px; height: 236px; top: calc(50% - 50px); --pad: 30px; }
+    .zoom { right: max(8px, env(safe-area-inset-right)); width: 46px; height: 236px; top: calc(50% - 50px); --pad: 30px; }
     .zoom-num { display: none; }
-    .zoom-ticks { left: 0; }
-    .zoom-hit { left: 8px; width: 44px; }
-    .zoom-thumb { width: 32px; height: 48px; border-radius: 16px; }
-    .zoom-lab { left: 52px; font-size: 10px; letter-spacing: 0.02em; }
+    .zoom-ticks { left: 0; width: 9px; }
+    .zoom-ticks i { width: 5px; }
+    .zoom-ticks i.major { width: 8px; }
+    .zoom-hit { left: 9px; width: 26px; }
+    .zoom-track { width: 6px; margin-left: -3px; }
+    .zoom-thumb { width: 22px; height: 40px; border-radius: 11px; }
+    .zoom-thumb::after { width: 10px; height: 10px; margin: -5px 0 0 -5px; }
+    .zoom-lab { left: 35px; font-size: 9px; letter-spacing: 0; }
   }
 
   @media (max-width: 640px) {
@@ -414,10 +534,13 @@
   }
 </style>
 <script>
-  // Apply the saved theme before first paint (no flash). Dark is the default.
+  // Apply the saved theme before first paint (no flash). Zoommer is the default.
   (function () {
-    var t = 'dark';
-    try { if (localStorage.getItem('iphone3d-theme') === 'light') t = 'light'; } catch (e) {}
+    var t = 'zoommer';
+    try {
+      var saved = localStorage.getItem('iphone3d-theme');
+      if (saved === 'light' || saved === 'dark' || saved === 'zoommer') t = saved;
+    } catch (e) {}
     document.documentElement.setAttribute('data-theme', t);
   })();
 </script>
@@ -431,6 +554,30 @@
 </script>
 </head>
 <body>
+<div class="zenv" id="zenv" aria-hidden="true"><i class="z-base"></i><i class="z-glow"></i><i class="z-beam"></i><i class="z-floor"></i><i class="z-fog"></i></div>
+<!-- Zoommer brand typography (behind the 3D canvas). -->
+<div class="ztype" id="ztype" aria-hidden="true">
+  <div class="zt-line" id="zt-line"><svg class="zt-apple" viewBox="-47 -71 94 118" aria-hidden="true"><path d="M0 40C6 41 10 46 18 46C26 46 32 38 38 28C41 23 44 15 46 8C35 3 30-6 30-14C30-23 35-29 42-32C38-40 28-45 20-45C12-45 6-41 0-41C-6-41-12-45-20-45C-34-45-46-33-46-14C-46 6-40 26-32 38C-27 44-23 46-18 46C-10 46-6 41 0 40Z"/><path d="M1-48C1-59 9-68 21-70C22-58 13-48 1-48Z"/></svg><span>iPhone 17</span></div>
+  <svg class="zt-pro" id="zt-pro" viewBox="0 0 1000 200" aria-hidden="true">
+    <path fill-rule="evenodd" d="M0 0H250A60 60 0 0 1 310 60V64A60 60 0 0 1 250 124H72V200H0Z M72 46H235A17 17 0 0 1 252 63A17 17 0 0 1 235 80H72Z"/>
+    <path fill-rule="evenodd" d="M330 0H580A60 60 0 0 1 640 60V64A60 60 0 0 1 580 124H402V200H330Z M402 46H565A17 17 0 0 1 582 63A17 17 0 0 1 565 80H402Z"/>
+    <path d="M512 112H606L660 200H564Z"/>
+    <path fill-rule="evenodd" d="M750 0H930A70 70 0 0 1 1000 70V130A70 70 0 0 1 930 200H750A70 70 0 0 1 680 130V70A70 70 0 0 1 750 0Z M780 56H900A28 28 0 0 1 928 84V116A28 28 0 0 1 900 144H780A28 28 0 0 1 752 116V84A28 28 0 0 1 780 56Z"/>
+  </svg>
+  <!-- Official Latin "zoommer" wordmark: the 7 letter paths from page 8 of "zoommer Brand Guidlines 2025.pdf",
+       geometry unchanged (only recoloured white). viewBox = the artwork's exact ink box. -->
+  <svg class="zt-word" id="zt-word" viewBox="696.546 -366.243 485.32 62.742" aria-hidden="true">
+    <g id="zt-word-ink" fill="#ffffff">
+      <path d="M738.069 -353.642L701.943 -327.453C691.738 -320.055 696.971 -303.92 709.576 -303.92L742.126 -303.92C745.603 -303.92 748.422 -306.738 748.422 -310.215C748.422 -313.696 745.598 -316.516 742.117 -316.511L708.542 -316.469L744.737 -342.709C754.943 -350.107 749.71 -366.242 737.104 -366.242L704.317 -366.242C700.84 -366.242 698.021 -363.423 698.021 -359.946L698.021 -359.938C698.021 -356.461 700.84 -353.642 704.317 -353.642Z"/>
+      <path d="M801.806 -316.52L775.138 -316.52C773.751 -316.52 772.629 -317.643 772.629 -319.029L772.629 -351.134C772.629 -352.519 773.751 -353.643 775.138 -353.643L801.806 -353.643C803.191 -353.643 804.315 -352.519 804.315 -351.134L804.315 -319.029C804.315 -317.643 803.191 -316.52 801.806 -316.52M804.244 -366.243L772.699 -366.243C765.368 -366.243 759.422 -360.299 759.422 -352.966L759.422 -317.196C759.422 -309.864 765.368 -303.92 772.699 -303.92L804.244 -303.92C811.577 -303.92 817.52 -309.864 817.52 -317.196L817.52 -352.966C817.52 -360.299 811.577 -366.243 804.244 -366.243"/>
+      <path d="M872.613 -316.52L845.945 -316.52C844.558 -316.52 843.435 -317.643 843.435 -319.029L843.435 -351.134C843.435 -352.519 844.558 -353.643 845.945 -353.643L872.613 -353.643C873.998 -353.643 875.122 -352.519 875.122 -351.134L875.122 -319.029C875.122 -317.643 873.998 -316.52 872.613 -316.52M875.051 -366.243L843.507 -366.243C836.174 -366.243 830.229 -360.299 830.229 -352.966L830.229 -317.196C830.229 -309.864 836.174 -303.92 843.507 -303.92L875.051 -303.92C882.383 -303.92 888.327 -309.864 888.327 -317.196L888.327 -352.966C888.327 -360.299 882.383 -366.243 875.051 -366.243"/>
+      <path d="M1161.405 -310.104L1161.405 -351.133C1161.405 -352.519 1162.528 -353.642 1163.914 -353.642L1175.571 -353.642C1179.049 -353.642 1181.866 -356.462 1181.866 -359.938L1181.866 -359.946C1181.866 -363.424 1179.049 -366.242 1175.571 -366.242L1161.475 -366.242C1154.143 -366.242 1148.199 -360.298 1148.199 -352.966L1148.199 -310.104C1148.199 -306.457 1151.155 -303.501 1154.802 -303.501C1158.449 -303.501 1161.405 -306.457 1161.405 -310.104"/>
+      <path d="M963.966 -366.242L914.315 -366.242C906.982 -366.242 901.037 -360.298 901.037 -352.966L901.037 -310.252C901.037 -306.605 903.993 -303.649 907.641 -303.649C911.287 -303.649 914.243 -306.605 914.243 -310.252L914.243 -351.133C914.243 -352.519 915.367 -353.642 916.753 -353.642L932.746 -353.642L932.746 -310.252C932.746 -306.605 935.702 -303.649 939.349 -303.649C942.995 -303.649 945.951 -306.605 945.951 -310.252L945.951 -353.642L961.528 -353.642C962.914 -353.642 964.035 -352.519 964.035 -351.133L964.035 -310.252C964.035 -306.605 966.992 -303.649 970.639 -303.649C974.285 -303.649 977.241 -306.605 977.241 -310.252L977.241 -352.966C977.241 -360.298 971.298 -366.242 963.966 -366.242"/>
+      <path d="M1052.881 -366.242L1003.23 -366.242C995.897 -366.242 989.952 -360.298 989.952 -352.966L989.952 -310.252C989.952 -306.605 992.908 -303.649 996.556 -303.649C1000.202 -303.649 1003.158 -306.605 1003.158 -310.252L1003.158 -351.133C1003.158 -352.519 1004.282 -353.642 1005.668 -353.642L1021.661 -353.642L1021.661 -310.252C1021.661 -306.605 1024.617 -303.649 1028.264 -303.649C1031.91 -303.649 1034.866 -306.605 1034.866 -310.252L1034.866 -353.642L1050.442 -353.642C1051.827 -353.642 1052.951 -352.519 1052.951 -351.133L1052.951 -310.252C1052.951 -306.605 1055.906 -303.649 1059.555 -303.649C1063.2 -303.649 1066.156 -306.605 1066.156 -310.252L1066.156 -352.966C1066.156 -360.298 1060.213 -366.242 1052.881 -366.242"/>
+      <path d="M1092.072 -351.133C1092.072 -352.519 1093.196 -353.642 1094.582 -353.642L1121.251 -353.642C1122.634 -353.642 1123.759 -352.519 1123.759 -351.133L1123.759 -341.787C1123.759 -340.401 1122.634 -339.279 1121.251 -339.279L1092.073 -339.279ZM1123.687 -326.678C1131.019 -326.678 1136.965 -332.622 1136.965 -339.954L1136.965 -352.965C1136.965 -360.298 1131.019 -366.242 1123.687 -366.242L1092.144 -366.242C1084.811 -366.242 1078.867 -360.298 1078.867 -352.965L1078.867 -317.196C1078.867 -309.863 1084.811 -303.92 1092.144 -303.92L1127.714 -303.92C1131.193 -303.92 1134.013 -306.74 1134.013 -310.219C1134.013 -313.699 1131.193 -316.52 1127.714 -316.52L1094.582 -316.52C1093.196 -316.52 1092.073 -317.643 1092.073 -319.029L1092.073 -326.678Z"/>
+    </g>
+  </svg>
+</div>
 <canvas id="c" tabindex="0" aria-label="iPhone 17 Pro Max-ის ინტერაქტიული 3D მოდელი"></canvas>
 
 <header>
@@ -506,18 +653,32 @@
     </button>
   </div>
 </nav>
-<button class="glass theme-toggle" id="theme" role="switch" aria-checked="true" aria-label="მუქი რეჟიმი" data-tip="ღია რეჟიმი">
-  <span class="tt-icon sun" aria-hidden="true">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.6"/><path d="M12 3.2v1.9M12 18.9v1.9M3.2 12h1.9M18.9 12h1.9M5.8 5.8l1.3 1.3M16.9 16.9l1.3 1.3M5.8 18.2l1.3-1.3M16.9 7.1l1.3-1.3"/></svg>
-  </span>
-  <span class="tt-icon moon" aria-hidden="true">
-    <svg viewBox="0 0 24 24"><path d="M19.2 14.6A7.6 7.6 0 0 1 9.4 4.8a7.6 7.6 0 1 0 9.8 9.8Z"/></svg>
-  </span>
-  <span class="tt-knob" aria-hidden="true">
-    <svg class="k-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.6"/><path d="M12 3.2v1.9M12 18.9v1.9M3.2 12h1.9M18.9 12h1.9M5.8 5.8l1.3 1.3M16.9 16.9l1.3 1.3M5.8 18.2l1.3-1.3M16.9 7.1l1.3-1.3"/></svg>
-    <svg class="k-moon" viewBox="0 0 24 24"><path d="M19.2 14.6A7.6 7.6 0 0 1 9.4 4.8a7.6 7.6 0 1 0 9.8 9.8Z"/></svg>
-  </span>
-</button>
+<!-- Zoommer emblem: the round mark from the official logo (ZoommerSalesDashboard/…/zoommer-logo.svg), wordmark removed. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="zm-mark" viewBox="0 0 44.6 44.6">
+    <path d="M160.488,583.192c-.053-.06-.107-.121-.163-.182a22.413,22.413,0,0,0-20.96-6.612.049.049,0,0,1-.044-.084l20.036-18.75h0c.381-.356.771-.752,1.192-1.212a1.635,1.635,0,0,0,.058-2.193,1.585,1.585,0,0,0-2.343,0c-.386.422-.737.781-1.073,1.1a19.239,19.239,0,0,1-27.194-.9c-.033-.035-.064-.071-.1-.108l-.053-.061a1.63,1.63,0,0,0-2.213-.247,1.584,1.584,0,0,0-.195,2.307l.074.084c.055.063.11.126.168.189A22.263,22.263,0,0,0,143.3,563.6q.382.013.762.012a22.456,22.456,0,0,0,4.564-.471.049.049,0,0,1,.044.084l-20.021,18.735c-.381.356-.772.754-1.194,1.213a1.634,1.634,0,0,0-.058,2.192,1.583,1.583,0,0,0,2.343,0c.387-.423.738-.781,1.074-1.1a19.262,19.262,0,0,1,27.194.9c.032.034.062.069.092.1l.118.134a1.584,1.584,0,0,0,2.345-2.131Z" transform="translate(-121.518 -547.461)"/>
+    <path d="M100.309,628.269a.053.053,0,0,0-.009-.085l-1.751-1.041a30.93,30.93,0,0,1-4.036-2.87,1.618,1.618,0,0,0-2.021-.09,1.586,1.586,0,0,0-.063,2.477c.867.729,1.768,1.414,2.692,2.048a.047.047,0,0,1,.005.073l-2.733,2.558a1.629,1.629,0,0,0-.182,2.22,1.585,1.585,0,0,0,2.3.139Z" transform="translate(-91.855 -606.756)"/>
+    <path d="M119.831,592a25,25,0,0,1-12.189-6.749,1.585,1.585,0,0,0-2.34.105,1.64,1.64,0,0,0,.161,2.2,28.186,28.186,0,0,0,10.811,6.729.047.047,0,0,1,.017.079l-10.281,9.621q-.3.278-.581.562a1.636,1.636,0,0,0-.006,2.345,1.585,1.585,0,0,0,2.187-.045c.185-.184.372-.367.565-.547L122.9,592.512a.05.05,0,0,0-.032-.087,20.182,20.182,0,0,1-3.039-.426" transform="translate(-102.89 -573.771)"/>
+    <path d="M330.894,629.961l2.733-2.557a1.63,1.63,0,0,0,.181-2.221,1.584,1.584,0,0,0-2.3-.139l-5.8,5.429a.054.054,0,0,0,.009.085l1.751,1.041a30.941,30.941,0,0,1,4.036,2.87,1.619,1.619,0,0,0,2.021.09,1.586,1.586,0,0,0,.063-2.477c-.867-.729-1.767-1.414-2.691-2.048a.046.046,0,0,1-.006-.073" transform="translate(-289.191 -607.385)"/>
+    <path d="M258.3,598.171a.047.047,0,0,1-.016-.079l10.28-9.62c.2-.184.391-.372.581-.56a1.637,1.637,0,0,0,.007-2.346,1.585,1.585,0,0,0-2.187.045c-.185.185-.373.367-.565.547l-14.727,13.781a.05.05,0,0,0,.032.087,20.233,20.233,0,0,1,3.039.426,25.012,25.012,0,0,1,12.188,6.749,1.585,1.585,0,0,0,2.34-.105,1.639,1.639,0,0,0-.16-2.2,28.2,28.2,0,0,0-10.811-6.729" transform="translate(-226.708 -574.079)"/>
+    <path d="M157.383,738.69c-.215.2-.427.412-.646.641a1.584,1.584,0,1,0,2.288,2.191c.18-.188.351-.358.524-.519a13.4,13.4,0,0,1,18.815.547,1.584,1.584,0,1,0,2.3-2.184,16.58,16.58,0,0,0-23.276-.676" transform="translate(-146.238 -699.903)"/>
+    <path d="M207.872,773.206a10.675,10.675,0,0,0-10.71-.016,1.584,1.584,0,0,0,1.589,2.741,7.5,7.5,0,0,1,7.525.012,1.584,1.584,0,1,0,1.6-2.737" transform="translate(-180.057 -731.558)"/>
+    <path d="M169.071,537.8a16.472,16.472,0,0,0,11.29-4.442c.215-.2.426-.411.646-.64a1.584,1.584,0,1,0-2.287-2.192c-.18.188-.351.358-.524.519a13.4,13.4,0,0,1-18.815-.547,1.584,1.584,0,0,0-2.295,2.184,16.493,16.493,0,0,0,11.985,5.119" transform="translate(-146.535 -527.539)"/>
+    <path d="M197.517,517.182a10.677,10.677,0,0,0,10.711.017,1.584,1.584,0,0,0-1.589-2.741,7.5,7.5,0,0,1-7.525-.012,1.584,1.584,0,1,0-1.6,2.736" transform="translate(-180.36 -514.229)"/>
+  </symbol>
+</svg>
+<div class="glass theme-toggle" id="theme" role="radiogroup" aria-label="თემა">
+  <span class="tt-knob" aria-hidden="true"></span>
+  <button type="button" role="radio" data-mode="light" aria-checked="false" tabindex="-1" aria-label="Light" data-tip="Light">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 3.2v1.9M12 18.9v1.9M3.2 12h1.9M18.9 12h1.9M5.8 5.8l1.3 1.3M16.9 16.9l1.3 1.3M5.8 18.2l1.3-1.3M16.9 7.1l1.3-1.3"/></svg>
+  </button>
+  <button type="button" role="radio" data-mode="zoommer" aria-checked="true" tabindex="0" aria-label="Zoommer" data-tip="Zoommer">
+    <svg class="zm" viewBox="0 0 44.6 44.6" aria-hidden="true"><use href="#zm-mark"/></svg>
+  </button>
+  <button type="button" role="radio" data-mode="dark" aria-checked="false" tabindex="-1" aria-label="Dark" data-tip="Dark">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.2 14.6A7.6 7.6 0 0 1 9.4 4.8a7.6 7.6 0 1 0 9.8 9.8Z"/></svg>
+  </button>
+</div>
 <div class="tip" id="tip" role="tooltip" aria-hidden="true"></div>
 
 <div id="loader" role="status" aria-live="polite">
@@ -920,6 +1081,17 @@ async function main() {
   const fill = new THREE.HemisphereLight(0xc4c9d4, 0x111113, 0.9);
   scene.add(key, rim, fill);
 
+  // Zoommer mode: warm orange bounce/rim lights, faded in and out with the backdrop
+  // (cheaper and smoother than swapping the environment map).
+  const zHemi = new THREE.HemisphereLight(0xffd9bf, 0xff7a3a, 0);
+  const zWarmL = new THREE.DirectionalLight(0xff6a1f, 0);
+  zWarmL.position.set(-380, 60, -120);
+  const zWarmR = new THREE.DirectionalLight(0xff8a45, 0);
+  zWarmR.position.set(400, -40, 160);
+  scene.add(zHemi, zWarmL, zWarmR);
+  const RIM_BASE = rim.intensity;
+  const themeLight = { mix: 0, target: 0 };
+
   // ───────────────────────── Materials ─────────────────────────
   await step('მოდელის აგება…');
   const PALETTES = {
@@ -1210,34 +1382,53 @@ float antennaMask() {
   }
 
   // ───────────────────────── Camera framing ─────────────────────────
-  function baseDistance() {
-    const aspect = camera.aspect;
-    const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
-    const dHgt = 250 / 2 / tv;
-    const dWid = 128 / 2 / (tv * aspect);
-    return Math.max(dHgt, dWid);
+  // Work area = the visible scene above the bottom controls (bar and, on narrow screens, the stacked theme switch).
+  // On narrow screens the centred title stack would meet the top-left heading, so the area starts below it.
+  const NARROW = 720;
+  function workArea() {
+    const dockTop = document.getElementById('dock').getBoundingClientRect().top;
+    const th = document.getElementById('theme');
+    const themeTop = th.classList.contains('placed') ? th.getBoundingClientRect().top : Infinity;
+    const bottom = Math.max(160, Math.min(dockTop, themeTop) - 16);
+    const top = window.innerWidth < NARROW ? Math.min(document.querySelector('header').getBoundingClientRect().bottom + 8, bottom - 140) : 0;
+    return { top, bottom, height: bottom - top };
   }
-  let baseDist = baseDistance();
+  // At zoom 0 the phone fills ~72 % of the work-area height and is centred in it.
+  // lookFactor shifts the aim point so that centre holds at every zoom distance.
+  const PHONE_FILL = 0.72;
+  let baseDist = 1, lookFactor = 0;
+  function frameCamera() {
+    const vh = window.innerHeight;
+    const wa = workArea();
+    const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+    let visH = H * vh / (PHONE_FILL * wa.height);              // world height visible at the phone
+    const minVisW = 120;                                       // keep the turning phone inside narrow screens
+    if (visH * camera.aspect < minVisW) visH = minVisW / camera.aspect;
+    baseDist = visH / 2 / tv;
+    lookFactor = (vh - (wa.top + wa.bottom)) * tv / vh;
+  }
+  frameCamera();
   function onResize() {
     const w = window.innerWidth, h = window.innerHeight;
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h, false);
-    baseDist = baseDistance();
+    frameCamera();
   }
   window.addEventListener('resize', onResize);
   window.addEventListener('orientationchange', onResize);
 
   // ───────────────────────── Interaction ─────────────────────────
-  const HOME = { yaw: Math.PI + 0.62, pitch: 0.07 };
+  const HOME = { yaw: Math.PI + 0.62, pitch: 0.07, roll: 0.14 };
   const VIEWS = {
-    front: { yaw: 0, pitch: 0 },
-    back: { yaw: Math.PI, pitch: 0 },
-    side: { yaw: -Math.PI / 2, pitch: 0 },
+    front: { yaw: 0, pitch: 0, roll: 0 },
+    back: { yaw: Math.PI, pitch: 0, roll: 0 },
+    side: { yaw: -Math.PI / 2, pitch: 0, roll: 0 },
     home: HOME
   };
   const PITCH_MAX = 1.5, ZOOM_MIN = 0.36, ZOOM_MAX = 1.6;
   const state = {
+    roll: HOME.roll,
     yaw: HOME.yaw, pitch: HOME.pitch, zoom: 1,
     tYaw: HOME.yaw, tPitch: HOME.pitch, tZoom: 1,
     vYaw: 0, vPitch: 0
@@ -1309,21 +1500,49 @@ float antennaMask() {
   }
   dockEl.addEventListener('scroll', () => hideTip(), { passive: true });
 
-  // ── Light / Dark mode
+  // ── Theme: Light / Dark / Zoommer (radio group, roving tabindex)
+  const THEMES = ['light', 'zoommer', 'dark'];
+  const THEME_META = { light: '#e9ebee', dark: '#121316', zoommer: '#ff5000' };
+  const themeOpts = [...themeBtn.querySelectorAll('[data-mode]')];
   const themeMeta = document.querySelector('meta[name="theme-color"]');
+  let currentTheme = 'zoommer';
   function applyTheme(t, persist) {
-    const dark = t !== 'light';
-    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    themeBtn.setAttribute('aria-checked', String(dark));
-    themeBtn.dataset.tip = dark ? 'ღია რეჟიმი' : 'მუქი რეჟიმი';
-    if (tipFor === themeBtn) showTip(themeBtn);
-    if (themeMeta) themeMeta.setAttribute('content', dark ? '#121316' : '#e9ebee');
-    if (persist) { try { localStorage.setItem('iphone3d-theme', dark ? 'dark' : 'light'); } catch (e) { /* storage unavailable */ } }
+    if (!THEMES.includes(t)) t = 'zoommer';
+    currentTheme = t;
+    document.documentElement.setAttribute('data-theme', t);
+    themeBtn.style.setProperty('--i', String(THEMES.indexOf(t)));
+    themeOpts.forEach(b => {
+      const on = b.dataset.mode === t;
+      b.setAttribute('aria-checked', String(on));
+      b.tabIndex = on ? 0 : -1;
+    });
+    if (themeMeta) themeMeta.setAttribute('content', THEME_META[t]);
+    themeLight.target = t === 'zoommer' ? 1 : 0;
+    if (persist) { try { localStorage.setItem('iphone3d-theme', t); } catch (e) { /* storage unavailable */ } }
   }
   applyTheme(document.documentElement.getAttribute('data-theme'), false);
-  themeBtn.addEventListener('click', () => {
-    applyTheme(themeBtn.getAttribute('aria-checked') === 'true' ? 'light' : 'dark', true);
+  themeLight.mix = themeLight.target;            // no fade on first load
+  themeOpts.forEach(b => b.addEventListener('click', () => applyTheme(b.dataset.mode, true)));
+  themeBtn.addEventListener('keydown', (e) => {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    let idx = THEMES.indexOf(currentTheme);
+    if (step) idx = (idx + step + THEMES.length) % THEMES.length;
+    else if (e.key === 'Home') idx = 0;
+    else if (e.key === 'End') idx = THEMES.length - 1;
+    else return;
+    e.preventDefault();
+    e.stopPropagation();
+    applyTheme(THEMES[idx], true);
+    themeOpts[idx].focus();
   });
+
+  // Very light pointer parallax for the Zoommer studio layers.
+  const zenvEl = document.getElementById('zenv');
+  const parallax = { x: 0, y: 0, tx: 0, ty: 0 };
+  window.addEventListener('pointermove', (e) => {
+    parallax.tx = (e.clientX / window.innerWidth - 0.5) * 2;
+    parallax.ty = (e.clientY / window.innerHeight - 0.5) * 2;
+  }, { passive: true });
 
   // Place the switch exactly midway between the bar's right edge and the zoom slider's left edge,
   // vertically centred on the bar. If that gap is too narrow (phones), stack it centred above the bar.
@@ -1347,13 +1566,71 @@ float antennaMask() {
     document.documentElement.classList.toggle('theme-stacked', stacked);
     themeBtn.classList.add('placed');
   }
-  placeThemeToggle();
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeThemeToggle);
+  // ── Zoommer typography layout (px), from the work area. Desktop targets: PRO ≈ 67 % of the width,
+  // zoommer wordmark exactly as wide as PRO's ink and centred on the screen's vertical middle; "iPhone 17" row ≈ 43 %
+  // of that width. PRO (≈ 29 %) and the top line (≈ 10 %) move up only if needed to keep clear gaps.
+  const ztLine = document.getElementById('zt-line');
+  const ztPro = document.getElementById('zt-pro');
+  const ztWord = document.getElementById('zt-word');
+  // Both SVGs' viewBoxes are their ink boxes (stroke included), so equal element widths = equal visible widths.
+  const WORD_ASPECT = ztWord.viewBox.baseVal.height / ztWord.viewBox.baseVal.width;
+  const PRO_ASPECT = 200 / 1000;                       // PRO's viewBox is already its ink box
+  let lineWidthPer100 = 0;
+  function measureLine() {
+    ztLine.style.fontSize = '100px';
+    lineWidthPer100 = ztLine.getBoundingClientRect().width;
+  }
+  function layoutBrand() {
+    if (!lineWidthPer100) measureLine();
+    const vw = window.innerWidth;
+    const wa = workArea();
+    const cx = vw / 2;
+    const zr = zoomBox.getBoundingClientRect();
+    const clearOfSlider = 2 * (zr.left - 12 - cx);     // widest a centred row can be without reaching the zoom slider
+    let w = 0.67 * vw;
+    const ratios = [0.10, 0.29, 0.50];
+    let underSlider = false;
+    if (w > clearOfSlider) {
+      if (clearOfSlider >= 0.6 * vw) w = clearOfSlider;
+      // Narrow screens: keep the words wide enough to show beside the phone; they pass behind the slider,
+      // which then gets a glass backing (CSS .zt-under-slider) so it stays legible.
+      else { w = 0.84 * vw; underSlider = true; }
+    }
+    let c0, c1, c2, lineH, proH, wordH, fs;
+    for (let i = 0; i < 14; i++) {
+      proH = w * PRO_ASPECT;
+      wordH = w * WORD_ASPECT;
+      fs = (0.43 * w) / lineWidthPer100 * 100;
+      lineH = fs * 0.78;
+      const gap = Math.max(8, 0.03 * w);
+      c2 = Math.min(window.innerHeight / 2, wa.bottom - 8 - wordH / 2);    // wordmark: middle of the screen
+      c1 = Math.min(wa.top + ratios[1] * wa.height, c2 - wordH / 2 - gap - proH / 2);
+      c0 = Math.min(wa.top + ratios[0] * wa.height, c1 - proH / 2 - gap - lineH / 2);
+      if (c0 - lineH / 2 >= wa.top + 6) break;
+      w *= 0.95;
+    }
+    document.documentElement.classList.toggle('zt-under-slider', underSlider);
+    ztLine.style.fontSize = fs.toFixed(2) + 'px';
+    ztLine.style.top = c0.toFixed(1) + 'px';
+    ztPro.style.width = w.toFixed(1) + 'px';
+    ztPro.style.height = proH.toFixed(1) + 'px';
+    ztPro.style.top = c1.toFixed(1) + 'px';
+    ztWord.style.width = w.toFixed(1) + 'px';
+    ztWord.style.height = wordH.toFixed(1) + 'px';
+    ztWord.style.top = c2.toFixed(1) + 'px';
+  }
+  function relayout() {
+    placeThemeToggle();
+    layoutBrand();
+    frameCamera();
+  }
+  relayout();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { lineWidthPer100 = 0; relayout(); });
 
   window.addEventListener('resize', () => {
     hideTip();
     setActive(viewBtns.find(b => b.classList.contains('active'))?.dataset.view ?? null);
-    placeThemeToggle();
+    relayout();
   });
 
   // ── Zoom slider: level −3 (farthest) … 0 (default framing) … +3 (closest).
@@ -1459,7 +1736,7 @@ float antennaMask() {
     const v = VIEWS[name];
     const cy = state.yaw;
     const ty = cy + Math.atan2(Math.sin(v.yaw - cy), Math.cos(v.yaw - cy)); // shortest way round
-    tween = { y0: cy, p0: state.pitch, y1: ty, p1: v.pitch, t0: performance.now(), dur: reducedMotion ? 350 : 1150 };
+    tween = { y0: cy, p0: state.pitch, r0: state.roll, y1: ty, p1: v.pitch, r1: v.roll, t0: performance.now(), dur: reducedMotion ? 350 : 1150 };
     state.tZoom = 1;
     state.vYaw = state.vPitch = 0;
     if (name !== 'home') setAuto(false);
@@ -1576,6 +1853,7 @@ float antennaMask() {
       const e = ease(p);
       state.yaw = state.tYaw = tween.y0 + (tween.y1 - tween.y0) * e;
       state.pitch = state.tPitch = tween.p0 + (tween.p1 - tween.p0) * e;
+      state.roll = tween.r0 + (tween.r1 - tween.r0) * e;
       if (p >= 1) tween = null;
     } else {
       if (!dragging) {
@@ -1600,8 +1878,31 @@ float antennaMask() {
 
     phone.rotation.set(state.pitch, state.yaw, 0, 'XYZ');
     pivot.position.y = reducedMotion ? 0 : Math.sin(t * 0.8) * 1.4;
+    pivot.rotation.z = state.roll;
+
+    // Zoommer lighting cross-fade (~0.8 s, matching the backdrop).
+    if (themeLight.mix !== themeLight.target) {
+      const d = themeLight.target - themeLight.mix;
+      themeLight.mix = Math.abs(d) < 0.002 || reducedMotion ? themeLight.target : themeLight.mix + d * (1 - Math.exp(-dt * 4.2));
+      const m = themeLight.mix;
+      zHemi.intensity = 0.45 * m;
+      zWarmL.intensity = 1.7 * m;
+      zWarmR.intensity = 1.0 * m;
+      rim.intensity = RIM_BASE * (1 - 0.5 * m);
+    }
+    if (currentTheme === 'zoommer' && !reducedMotion) {
+      const f = 1 - Math.exp(-dt * 3);
+      const nx = parallax.x + (parallax.tx - parallax.x) * f;
+      const ny = parallax.y + (parallax.ty - parallax.y) * f;
+      if (Math.abs(nx - parallax.x) + Math.abs(ny - parallax.y) > 0.0005) {
+        parallax.x = nx; parallax.y = ny;
+        zenvEl.style.setProperty('--px', nx.toFixed(4));
+        zenvEl.style.setProperty('--py', ny.toFixed(4));
+      }
+    }
 
     const dist = baseDist * state.zoom;
+    LOOK_AT.y = -lookFactor * dist;
     const elev = 0.07;
     camera.position.set(LOOK_AT.x, LOOK_AT.y + Math.sin(elev) * dist, Math.cos(elev) * dist);
     camera.lookAt(LOOK_AT);
