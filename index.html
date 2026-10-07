@@ -397,7 +397,10 @@
     left: calc(24px + env(safe-area-inset-left));
     top: 50%;
     width: 56px; height: 56px;
-    transform: translateY(-50%);
+    /* Whole control (button, menu, gaps) drawn at 90 %: 56 → 50.4 px, 40 → 36 px.
+       Scaling from the left-centre keeps its left edge and vertical centre in place. */
+    transform: translateY(-50%) scale(0.9);
+    transform-origin: 0 50%;
   }
   .share-main {
     position: relative; z-index: 2;
@@ -409,7 +412,9 @@
   .share-main .i-close { opacity: 0; transform: rotate(-90deg) scale(0.6); }
   .share.open .share-main .i-share { opacity: 0; transform: rotate(90deg) scale(0.6); }
   .share.open .share-main .i-close { opacity: 1; transform: none; }
-  .share.open .share-main button { color: var(--ctl-icon-hover); background: var(--ctl-hover-bg); }
+  /* The main button sits alone in its glass circle: no inner hover disc, just a brighter icon. */
+  .share .share-main button:hover,
+  .share.open .share-main button { color: var(--ctl-icon-hover); background: transparent; }
 
   .share-menu {
     position: absolute; z-index: 1; left: 64px; top: 0;       /* 56 px button + 8 px gap */
@@ -618,7 +623,7 @@
   .zoom-lab.bot { top: calc(100% - var(--pad)); }
 
   @media (max-width: 640px) {
-    .zoom { right: max(8px, env(safe-area-inset-right)); width: 46px; height: 236px; top: calc(50% - 50px); --pad: 30px; }
+    .zoom { right: max(8px, env(safe-area-inset-right)); width: 46px; height: 236px; top: 50%; --pad: 30px; }
     .zoom-num { display: none; }
     .zoom-ticks { left: 0; width: 9px; }
     .zoom-ticks i { width: 5px; }
@@ -721,7 +726,7 @@
         <rect x="10.6" y="5.5" width="2.8" height="1.1" rx="0.55" fill="currentColor" stroke="none"/>
       </svg>
     </button>
-    <button data-view="back" data-tip="უკანა ხედი" aria-label="უკანა ხედი" aria-pressed="false">
+    <button data-view="back" class="active" data-tip="უკანა ხედი" aria-label="უკანა ხედი" aria-pressed="true">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <rect x="6.5" y="2.5" width="11" height="19" rx="2.8"/>
         <circle cx="9.6" cy="6.3" r="1.25"/>
@@ -737,7 +742,7 @@
         <path d="M16.3 14.2v2.6" stroke-width="2"/>
       </svg>
     </button>
-    <button data-view="home" class="active" data-tip="საწყისი ხედი" aria-label="საწყისი ხედი" aria-pressed="true">
+    <button data-view="home" data-tip="საწყისი ხედი" aria-label="საწყისი ხედი" aria-pressed="false">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M7.6 4.5 14.4 3a1 1 0 0 1 1.2 1v16a1 1 0 0 1-1.2 1l-6.8-1.5a1.4 1.4 0 0 1-1.1-1.4V5.9a1.4 1.4 0 0 1 1.1-1.4Z"/>
         <path d="M15.6 4.1 17.6 5.3v13.4l-2 1.2"/>
@@ -747,7 +752,7 @@
   </div>
   <span class="sep" aria-hidden="true"></span>
   <div class="group">
-    <button id="auto" data-tip="ავტობრუნვა" aria-label="ავტობრუნვა" aria-pressed="true">
+    <button id="auto" data-tip="ავტობრუნვა" aria-label="ავტობრუნვა" aria-pressed="false">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <rect x="9.6" y="7.2" width="4.8" height="9.6" rx="1.3"/>
         <path d="M4.7 9.3A7.8 7.8 0 0 1 18 7"/>
@@ -1549,12 +1554,13 @@ float antennaMask() {
   };
   const PITCH_MAX = 1.5, ZOOM_MIN = 0.36, ZOOM_MAX = 1.6;
   const state = {
-    roll: HOME.roll,
-    yaw: HOME.yaw, pitch: HOME.pitch, zoom: 1,
-    tYaw: HOME.yaw, tPitch: HOME.pitch, tZoom: 1,
+    // First load: standing still on the back view (the tilted hero stays on the home button).
+    roll: 0,
+    yaw: Math.PI, pitch: 0, zoom: 1,
+    tYaw: Math.PI, tPitch: 0, tZoom: 1,
     vYaw: 0, vPitch: 0
   };
-  let autoRotate = !reducedMotion;
+  let autoRotate = false;
   let tween = null;
   const clamp = THREE.MathUtils.clamp;
 
@@ -1583,7 +1589,7 @@ float antennaMask() {
     if (sel) segInd.style.transform = `translateX(${sel.offsetLeft}px)`;
     segInd.classList.toggle('show', !!sel);
   }
-  setActive('home');
+  setActive('back');
 
   // Tooltips: one shared bubble positioned above the hovered / keyboard-focused button
   // (fixed-position, so the bar's horizontal scroll can't clip it).
@@ -1848,6 +1854,8 @@ float antennaMask() {
   const shareToast = document.getElementById('share-toast');
   const shareActions = [...shareMenu.querySelectorAll('[data-share]')];
   const canNativeShare = typeof navigator.share === 'function';
+  const isPhone = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);          // iPadOS reports as Mac
   let canShareFiles = false;
   try {
     canShareFiles = canNativeShare && typeof navigator.canShare === 'function' &&
@@ -1870,14 +1878,24 @@ float antennaMask() {
   function layoutShareMenu() {
     shareEl.classList.remove('vertical', 'up');
     const r = shareEl.getBoundingClientRect();
-    const need = 64 + shareMenu.offsetWidth;
+    const k = r.width / shareEl.offsetWidth;                // current CSS scale (0.9)
+    const need = (64 + shareMenu.offsetWidth) * k;
     if (r.left + need > window.innerWidth - 12) {
       shareEl.classList.add('vertical');
       const below = window.innerHeight - r.bottom - 8;
-      if (below < shareMenu.offsetHeight + 12) shareEl.classList.add('up');
+      if (below < shareMenu.offsetHeight * k + 12) shareEl.classList.add('up');
     }
   }
-  window.addEventListener('resize', () => { if (shareEl.classList.contains('open')) layoutShareMenu(); });
+  const zeroTick = document.querySelector('.zoom-ticks i.zero');
+  function alignShareToZero() {
+    const z = zeroTick.getBoundingClientRect();
+    shareEl.style.top = (z.top + z.height / 2) + 'px';     // .share is translateY(-50%), so its centre lands on the 0 mark
+  }
+  alignShareToZero();
+  window.addEventListener('resize', () => {
+    alignShareToZero();
+    if (shareEl.classList.contains('open')) layoutShareMenu();
+  });
   function setShareOpen(open) {
     if (open) layoutShareMenu();
     shareEl.classList.toggle('open', open);
@@ -1939,7 +1957,12 @@ float antennaMask() {
     const act = btn.dataset.share;
     try {
       if (act === 'whatsapp') { openWindow(`https://wa.me/?text=${encodeURIComponent(`${SHARE_TITLE} ${SHARE_URL}`)}`); setShareOpen(false); }
-      else if (act === 'facebook') { openWindow(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(SHARE_URL)}`); setShareOpen(false); }
+      else if (act === 'facebook') {
+        // On phones the Facebook app captures facebook.com links and drops the sharer's ?u= (it just opens the feed).
+        // There, hand the link to the app via the system share sheet instead — it posts it with the og:image preview.
+        if (isPhone && canNativeShare) await nativeShare(false);
+        else { openWindow(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(SHARE_URL)}`); setShareOpen(false); }
+      }
       else if (act === 'copy') { await copyLink(btn); }
       else if (act === 'more') { await nativeShare(canShareFiles); }
       else if (act === 'instagram') {
@@ -2097,7 +2120,7 @@ float antennaMask() {
 
   canvas.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    canvas.setPointerCapture(e.pointerId);
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* pointer already gone */ }
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 1) {
       dragging = true; moved = false;
