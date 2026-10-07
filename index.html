@@ -1886,9 +1886,11 @@ float antennaMask() {
       if (below < shareMenu.offsetHeight * k + 12) shareEl.classList.add('up');
     }
   }
-  const zeroTick = document.querySelector('.zoom-ticks i.zero');
+  // The 0 mark is the exact centre of the slider's track area (#zoom-hit, present in the HTML from the start;
+  // the tick marks themselves are generated later in this script).
+  const zoomTrackArea = document.getElementById('zoom-hit');
   function alignShareToZero() {
-    const z = zeroTick.getBoundingClientRect();
+    const z = zoomTrackArea.getBoundingClientRect();
     shareEl.style.top = (z.top + z.height / 2) + 'px';     // .share is translateY(-50%), so its centre lands on the 0 mark
   }
   alignShareToZero();
