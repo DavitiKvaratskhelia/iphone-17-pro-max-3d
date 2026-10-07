@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ff5000">
 <title>iPhone 17 Pro Max — 3D</title>
+<link rel="canonical" href="https://iphone-17-pro-max-3d.vercel.app/">
+<meta name="description" content="iPhone 17 Pro Max — ინტერაქტიული 3D ხედი · Zoommer">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Zoommer">
+<meta property="og:title" content="iPhone 17 Pro Max — 3D | Zoommer">
+<meta property="og:description" content="iPhone 17 Pro Max — ინტერაქტიული 3D ხედი">
+<meta property="og:url" content="https://iphone-17-pro-max-3d.vercel.app/">
+<meta property="og:image" content="https://iphone-17-pro-max-3d.vercel.app/og-image.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="iPhone 17 Pro Max, Zoommer">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://iphone-17-pro-max-3d.vercel.app/og-image.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;500;600&display=swap" rel="stylesheet">
@@ -342,7 +356,8 @@
     transition: transform 260ms cubic-bezier(0.3, 0.7, 0.2, 1), background-color var(--theme-dur) ease, box-shadow var(--theme-dur) ease;
     pointer-events: none;
   }
-  .theme-toggle button {
+  .theme-toggle button,
+  .share button {
     position: relative; z-index: 1;
     flex: none;
     display: grid; place-items: center;
@@ -354,12 +369,16 @@
     touch-action: manipulation;
     transition: color 0.2s ease, background-color 0.18s ease, transform 0.18s ease;
   }
-  .theme-toggle button:hover { color: var(--ctl-icon-hover); background: var(--ctl-hover-bg); }
+  .theme-toggle button:hover,
+  .share button:hover { color: var(--ctl-icon-hover); background: var(--ctl-hover-bg); }
   .theme-toggle button[aria-checked="true"],
   .theme-toggle button[aria-checked="true"]:hover { color: var(--ctl-active-icon); background: transparent; }
-  .theme-toggle button:active { transform: scale(0.92); }
-  .theme-toggle button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .theme-toggle svg {
+  .theme-toggle button:active,
+  .share-main button:active { transform: scale(0.92); }
+  .theme-toggle button:focus-visible,
+  .share button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .theme-toggle svg,
+  .share svg {
     width: 20px; height: 20px;
     fill: none; stroke: currentColor; stroke-width: 1.6;
     stroke-linecap: round; stroke-linejoin: round;
@@ -370,6 +389,92 @@
   @media (prefers-reduced-motion: reduce) {
     .theme-toggle .tt-knob { transition-duration: 0.01ms; }
     .zenv, .ztype, body::before { transition-duration: 200ms; }
+  }
+
+  /* ── Share: 56 × 56 glass button, left edge, vertically centred; menu capsule slides out to its right ── */
+  .share {
+    position: fixed; z-index: 6;
+    left: calc(24px + env(safe-area-inset-left));
+    top: 50%;
+    width: 56px; height: 56px;
+    transform: translateY(-50%);
+  }
+  .share-main {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    width: 56px;
+    padding: 7px;                                   /* + 1 px border = 8 px */
+  }
+  .share-main svg { position: absolute; transition: opacity 0.2s ease, transform 0.26s cubic-bezier(0.3, 0.7, 0.2, 1); }
+  .share-main .i-close { opacity: 0; transform: rotate(-90deg) scale(0.6); }
+  .share.open .share-main .i-share { opacity: 0; transform: rotate(90deg) scale(0.6); }
+  .share.open .share-main .i-close { opacity: 1; transform: none; }
+  .share.open .share-main button { color: var(--ctl-icon-hover); background: var(--ctl-hover-bg); }
+
+  .share-menu {
+    position: absolute; z-index: 1; left: 64px; top: 0;       /* 56 px button + 8 px gap */
+    display: flex; align-items: center; gap: 6px;
+    width: max-content;
+    padding: 7px;
+    transform-origin: left center;
+    opacity: 0;
+    transform: translateX(-12px) scale(0.92);
+    visibility: hidden;
+    /* closing: quicker, no overshoot */
+    transition: opacity 200ms ease, transform 230ms cubic-bezier(0.4, 0, 0.7, 0.2), visibility 0s linear 230ms,
+      background-color var(--theme-dur) ease, border-color var(--theme-dur) ease, box-shadow var(--theme-dur) ease;
+  }
+  .share.open .share-menu {
+    opacity: 1; transform: none; visibility: visible;
+    /* opening: ~330 ms with a light spring */
+    transition: opacity 220ms ease, transform 330ms cubic-bezier(0.34, 1.32, 0.64, 1), visibility 0s,
+      background-color var(--theme-dur) ease, border-color var(--theme-dur) ease, box-shadow var(--theme-dur) ease;
+  }
+  .share-menu button { opacity: 0; transform: translateX(-6px) scale(0.9); }
+  .share.open .share-menu button {
+    opacity: 1; transform: none;
+    transition: opacity 220ms ease calc(60ms + var(--k, 0) * 40ms),
+      transform 300ms cubic-bezier(0.34, 1.32, 0.64, 1) calc(60ms + var(--k, 0) * 40ms),
+      color 0.2s ease, background-color 0.18s ease;
+  }
+  .share.open .share-menu button:active { transform: scale(0.92); transition-delay: 0s; }
+  .share-menu button[hidden] { display: none; }
+  .share-menu button svg { position: absolute; transition: opacity 0.18s ease, transform 0.22s ease; }
+  .share-menu button .i-check { opacity: 0; transform: scale(0.6); }
+  .share-menu button.done .i-main { opacity: 0; transform: scale(0.6); }
+  .share-menu button.done .i-check { opacity: 1; transform: none; }
+  .share svg .dot { fill: currentColor; stroke: none; }
+
+  /* Not enough width (very narrow phones): stack the actions vertically next to the button. */
+  .share.vertical .share-menu { left: 0; top: 64px; flex-direction: column; transform-origin: top center; transform: translateY(-12px) scale(0.92); }
+  .share.vertical.up .share-menu { top: auto; bottom: 64px; transform-origin: bottom center; transform: translateY(12px) scale(0.92); }
+  .share.vertical.open .share-menu { transform: none; }
+  .share.vertical .share-menu button { transform: translateY(-6px) scale(0.9); }
+  .share.vertical.open .share-menu button { transform: none; }
+
+  .share-toast {
+    position: absolute; left: 64px; top: 66px;
+    height: auto; padding: 8px 14px;
+    font-size: 12.5px; line-height: 1.2; white-space: nowrap;
+    color: var(--fg);
+    opacity: 0; transform: translateY(-4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+  }
+  .share-toast.show { opacity: 1; transform: none; }
+  .share.vertical .share-toast { top: 4px; }
+
+  @media (max-width: 640px) {
+    .share { left: calc(14px + env(safe-area-inset-left)); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .share-menu, .share.open .share-menu, .share-menu button, .share.open .share-menu button,
+    .share.vertical .share-menu, .share.vertical .share-menu button {
+      transform: none !important;
+      transition: opacity 120ms ease, visibility 0s linear 120ms !important;
+    }
+    .share.open .share-menu { transition: opacity 120ms ease !important; }
+    .share-main svg { transition: opacity 120ms ease; transform: none !important; }
   }
   :root.theme-stacked .hint { bottom: calc(160px + env(safe-area-inset-bottom)); }
   .dock button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -678,6 +783,22 @@
   <button type="button" role="radio" data-mode="dark" aria-checked="false" tabindex="-1" aria-label="Dark" data-tip="Dark">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.2 14.6A7.6 7.6 0 0 1 9.4 4.8a7.6 7.6 0 1 0 9.8 9.8Z"/></svg>
   </button>
+</div>
+<div class="share" id="share">
+  <div class="glass share-main">
+    <button type="button" id="share-btn" aria-expanded="false" aria-controls="share-menu" aria-label="გაზიარება" data-tip="გაზიარება">
+      <svg viewBox="0 0 24 24" aria-hidden="true" class="i-share"><circle class="dot" cx="18" cy="5.5" r="2.7"/><circle class="dot" cx="6" cy="12" r="2.7"/><circle class="dot" cx="18" cy="18.5" r="2.7"/><path d="M8.2 10.8l7.6-4.2M8.2 13.2l7.6 4.2"/></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true" class="i-close"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
+    </button>
+  </div>
+  <div class="glass share-menu" id="share-menu" role="group" aria-label="გაზიარება" aria-hidden="true" inert>
+    <button type="button" data-share="instagram" aria-label="Instagram" data-tip="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.9"/><circle class="dot" cx="16.9" cy="7.1" r="1"/></svg></button>
+    <button type="button" data-share="whatsapp" aria-label="WhatsApp" data-tip="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 11.7a8.4 8.4 0 0 1-12.3 7.4L3.6 20.4l1.4-4.3a8.4 8.4 0 1 1 15.4-4.4Z"/><path d="M9.1 8.3c.3-.5.9-.5 1.2 0l.7 1.5c.1.3 0 .6-.2.8l-.5.5c.5 1.1 1.4 2 2.5 2.5l.5-.5c.2-.2.5-.3.8-.2l1.5.7c.5.3.5.9 0 1.2-.8.5-1.8.6-2.7.3-2-.8-3.6-2.4-4.4-4.4-.3-.9-.2-1.9.6-2.4Z"/></svg></button>
+    <button type="button" data-share="facebook" aria-label="Facebook" data-tip="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6"/><path d="M13.3 20.5v-7.2h2.3l.3-2.6h-2.6V9.2c0-.8.3-1.3 1.3-1.3h1.4V5.6c-.3 0-1.1-.1-2-.1-2 0-3.3 1.2-3.3 3.4v1.8H8.4v2.6h2.3v7.2"/></svg></button>
+    <button type="button" data-share="copy" aria-label="ბმულის კოპირება" data-tip="ბმულის კოპირება"><svg viewBox="0 0 24 24" aria-hidden="true" class="i-main"><path d="M10.2 13.8a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.1 1.1"/><path d="M13.8 10.2a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.1-1.1"/></svg><svg viewBox="0 0 24 24" aria-hidden="true" class="i-check"><path d="M5 12.6l4.3 4.3L19 7.2"/></svg></button>
+    <button type="button" data-share="more" aria-label="სხვა" data-tip="სხვა"><svg viewBox="0 0 24 24" aria-hidden="true"><circle class="dot" cx="5.5" cy="12" r="1.7"/><circle class="dot" cx="12" cy="12" r="1.7"/><circle class="dot" cx="18.5" cy="12" r="1.7"/></svg></button>
+  </div>
+  <div class="glass share-toast" id="share-toast" role="status" aria-live="polite"></div>
 </div>
 <div class="tip" id="tip" role="tooltip" aria-hidden="true"></div>
 
@@ -1393,9 +1514,9 @@ float antennaMask() {
     const top = window.innerWidth < NARROW ? Math.min(document.querySelector('header').getBoundingClientRect().bottom + 8, bottom - 140) : 0;
     return { top, bottom, height: bottom - top };
   }
-  // At zoom 0 the phone fills ~72 % of the work-area height and is centred in it.
+  // At zoom 0 the phone fills ~90 % of the work-area height (72 % × 1.25) and is centred in it.
   // lookFactor shifts the aim point so that centre holds at every zoom distance.
-  const PHONE_FILL = 0.72;
+  const PHONE_FILL = 0.9;
   let baseDist = 1, lookFactor = 0;
   function frameCamera() {
     const vh = window.innerHeight;
@@ -1483,7 +1604,8 @@ float antennaMask() {
     tipEl.classList.remove('show');
   }
   const themeBtn = document.getElementById('theme');
-  for (const host of [dockEl, themeBtn]) {
+  const shareEl = document.getElementById('share');
+  for (const host of [dockEl, themeBtn, shareEl]) {
     host.addEventListener('pointerover', (e) => {
       const b = e.target.closest('[data-tip]');
       if (b && e.pointerType !== 'touch') showTip(b);
@@ -1624,6 +1746,222 @@ float antennaMask() {
     layoutBrand();
     frameCamera();
   }
+
+  // ── Share image: always the Zoommer look with the phone standing upright (back + side, no tilt),
+  // composed from the same backdrop gradients, typography and 3D scene. Used for the system share sheet
+  // (and Instagram); the static og-image.jpg for link previews was produced with this same function.
+  function radialEllipse(x, cx, cy, rx, ry, stops, W, H) {
+    x.save();
+    x.translate(cx, cy);
+    x.scale(1, ry / rx);
+    const g = x.createRadialGradient(0, 0, 0, 0, 0, rx);
+    stops.forEach(([o, c]) => g.addColorStop(o, c));
+    x.fillStyle = g;
+    x.fillRect(-cx - 2, (-cy - 2) * rx / ry, W + 4, (H + 4) * rx / ry);
+    x.restore();
+  }
+  const PHONE_MM = H;                                   // phone height (mm) — the image size below reuses the name H
+  async function makeShareImage(W, H) {
+    try { await document.fonts.ready; } catch (e) { /* fonts optional */ }
+    if (!lineWidthPer100) measureLine();
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    // 1. Zoommer studio backdrop (mirrors the .zenv layers)
+    radialEllipse(x, W / 2, H * 0.4, 1.2 * W, 0.95 * H, [[0, '#ff8538'], [0.36, '#ff5000'], [0.66, '#d84300'], [1, '#8c2900']], W, H);
+    radialEllipse(x, W / 2, H * 0.4, 0.44 * W, 0.4 * H, [[0, 'rgba(255,200,156,0.55)'], [0.45, 'rgba(255,164,104,0.18)'], [0.75, 'rgba(255,120,60,0)']], W, H);
+    radialEllipse(x, W / 2, -0.14 * H, 0.36 * Math.max(W, H), 0.96 * H, [[0, 'rgba(255,242,230,0.34)'], [0.42, 'rgba(255,226,202,0.12)'], [0.72, 'rgba(255,210,180,0)']], W, H);
+    radialEllipse(x, W / 2, 0.731 * H, 0.696 * W, 0.192 * H, [[0, 'rgba(255,216,184,0.46)'], [0.46, 'rgba(255,172,122,0.16)'], [0.76, 'rgba(255,120,60,0)']], W, H);
+    const lg = x.createLinearGradient(0, 0.52 * H, 0, H);
+    lg.addColorStop(0, 'rgba(118,32,0,0)'); lg.addColorStop(1, 'rgba(118,32,0,0.3)');
+    x.fillStyle = lg; x.fillRect(0, 0.52 * H, W, 0.48 * H);
+    radialEllipse(x, W / 2, 0.64 * H, 0.85 * W, 0.55 * H, [[0, 'rgba(255,234,216,0.16)'], [0.7, 'rgba(255,234,216,0)']], W, H);
+
+    // 2. Typography (same artwork and proportions as the page)
+    // Fixed-size image: text block from the top; the phone (below) starts under the "iPhone 17" line.
+    const w = (W > H ? 0.6 : 0.8) * W;
+    const proH = w * PRO_ASPECT, wordH = w * WORD_ASPECT;
+    const fsz = 0.43 * w / lineWidthPer100 * 100, lineH = fsz * 0.78, gap = 0.035 * w;
+    const c0 = H * 0.065 + lineH / 2, c1 = c0 + lineH / 2 + gap + proH / 2, c2 = c1 + proH / 2 + gap + wordH / 2;
+    x.fillStyle = '#ffffff';
+    const fillSvg = (svg, vb, left, top, width, height) => {
+      x.save();
+      x.translate(left, top);
+      x.scale(width / vb.width, height / vb.height);
+      x.translate(-vb.x, -vb.y);
+      svg.querySelectorAll('path').forEach(p => x.fill(new Path2D(p.getAttribute('d')), p.getAttribute('fill-rule') === 'evenodd' ? 'evenodd' : 'nonzero'));
+      x.restore();
+    };
+    fillSvg(ztPro, ztPro.viewBox.baseVal, W / 2 - w / 2, c1 - proH / 2, w, proH);
+    fillSvg(ztWord, ztWord.viewBox.baseVal, W / 2 - w / 2, c2 - wordH / 2, w, wordH);
+    x.font = `500 ${fsz}px "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif`;
+    if ('letterSpacing' in x) x.letterSpacing = (-0.012 * fsz) + 'px';
+    const tw = x.measureText('iPhone 17').width, aw = 0.64 * fsz, ag = 0.16 * fsz;
+    const x0 = W / 2 - (aw + ag + tw) / 2;
+    const apple = ztLine.querySelector('svg');
+    fillSvg(apple, apple.viewBox.baseVal, x0, c0 - 0.4 * fsz - 0.05 * fsz, aw, 0.8 * fsz);
+    x.textBaseline = 'alphabetic';
+    x.fillText('iPhone 17', x0 + aw + ag, c0 + 0.35 * fsz);
+
+    // 3. Phone, upright, rendered by the live renderer at the image size — restored in the same task (no flicker).
+    const saved = {
+      pr: renderer.getPixelRatio(), size: renderer.getSize(new THREE.Vector2()),
+      aspect: camera.aspect, pos: camera.position.clone(), quat: camera.quaternion.clone(),
+      rot: phone.rotation.clone(), roll: pivot.rotation.z, py: pivot.position.y,
+      li: [zHemi.intensity, zWarmL.intensity, zWarmR.intensity, rim.intensity],
+    };
+    try {
+      zHemi.intensity = 0.45; zWarmL.intensity = 1.7; zWarmR.intensity = 1.0; rim.intensity = RIM_BASE * 0.5;
+      phone.rotation.set(0, Math.PI + 0.55, 0, 'XYZ');
+      pivot.rotation.z = 0; pivot.position.y = 0;
+      renderer.setPixelRatio(1);
+      renderer.setSize(W, H, false);
+      camera.aspect = W / H;
+      camera.updateProjectionMatrix();
+      const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+      const visH = PHONE_MM / 0.78;                      // phone fills ~78 % of the image height…
+      const d = visH / 2 / tv;
+      const ly = 0.06 * visH;                            // …centred at 56 % of the height
+      camera.position.set(0, ly + Math.sin(0.04) * d, Math.cos(0.04) * d);
+      camera.lookAt(0, ly, 0);
+      updateShadow();
+      renderer.render(scene, camera);
+      x.drawImage(renderer.domElement, 0, 0, W, H);
+    } finally {
+      [zHemi.intensity, zWarmL.intensity, zWarmR.intensity, rim.intensity] = saved.li;
+      phone.rotation.copy(saved.rot); pivot.rotation.z = saved.roll; pivot.position.y = saved.py;
+      renderer.setPixelRatio(saved.pr);
+      renderer.setSize(saved.size.x, saved.size.y, false);
+      camera.aspect = saved.aspect; camera.updateProjectionMatrix();
+      camera.position.copy(saved.pos); camera.quaternion.copy(saved.quat);
+      updateShadow();
+      renderer.render(scene, camera);
+    }
+    return new Promise((res, rej) => c.toBlob(b => (b ? res(b) : rej(new Error('toBlob failed'))), 'image/jpeg', 0.92));
+  }
+
+  // ── Share control
+  const SHARE_URL = (document.querySelector('link[rel="canonical"]') || {}).href || (location.origin + location.pathname);
+  const SHARE_TITLE = 'iPhone 17 Pro Max — Zoommer';
+  const shareBtn = document.getElementById('share-btn');
+  const shareMenu = document.getElementById('share-menu');
+  const shareToast = document.getElementById('share-toast');
+  const shareActions = [...shareMenu.querySelectorAll('[data-share]')];
+  const canNativeShare = typeof navigator.share === 'function';
+  let canShareFiles = false;
+  try {
+    canShareFiles = canNativeShare && typeof navigator.canShare === 'function' &&
+      navigator.canShare({ files: [new File([new Blob(['x'], { type: 'image/jpeg' })], 'x.jpg', { type: 'image/jpeg' })] });
+  } catch (e) { canShareFiles = false; }
+  shareMenu.querySelector('[data-share="more"]').hidden = !canNativeShare;     // no system sheet → no "More"
+  shareActions.filter(b => !b.hidden).forEach((b, i) => b.style.setProperty('--k', String(i)));
+
+  let shareFile = null;                                    // cached share image (File), rebuilt when the colour changes
+  function prepareShareFile() {
+    if (!shareFile) {
+      shareFile = makeShareImage(1080, 1350)
+        .then(blob => new File([blob], 'iphone-17-pro-max-zoommer.jpg', { type: 'image/jpeg' }))
+        .catch(() => null);
+    }
+    return shareFile;
+  }
+  document.querySelectorAll('.swatches button').forEach(b => b.addEventListener('click', () => { shareFile = null; }));
+
+  function layoutShareMenu() {
+    shareEl.classList.remove('vertical', 'up');
+    const r = shareEl.getBoundingClientRect();
+    const need = 64 + shareMenu.offsetWidth;
+    if (r.left + need > window.innerWidth - 12) {
+      shareEl.classList.add('vertical');
+      const below = window.innerHeight - r.bottom - 8;
+      if (below < shareMenu.offsetHeight + 12) shareEl.classList.add('up');
+    }
+  }
+  window.addEventListener('resize', () => { if (shareEl.classList.contains('open')) layoutShareMenu(); });
+  function setShareOpen(open) {
+    if (open) layoutShareMenu();
+    shareEl.classList.toggle('open', open);
+    shareBtn.setAttribute('aria-expanded', String(open));
+    const label = open ? 'გაზიარების დახურვა' : 'გაზიარება';
+    shareBtn.setAttribute('aria-label', label);
+    shareBtn.dataset.tip = label;
+    shareMenu.inert = !open;                                 // closed actions stay out of the Tab order
+    shareMenu.setAttribute('aria-hidden', String(!open));
+    hideTip();
+    if (open && canShareFiles) prepareShareFile();          // ready before the user picks a target
+  }
+  shareBtn.addEventListener('click', () => setShareOpen(!shareEl.classList.contains('open')));
+  // Outside press closes it without blocking anything: a drag that starts on the scene still rotates the phone.
+  document.addEventListener('pointerdown', (e) => {
+    if (shareEl.classList.contains('open') && !shareEl.contains(e.target)) setShareOpen(false);
+  }, true);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && shareEl.classList.contains('open')) { setShareOpen(false); shareBtn.focus(); }
+  });
+
+  let toastTimer = 0;
+  function showToast(msg) {
+    shareToast.textContent = msg;
+    shareToast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => shareToast.classList.remove('show'), 1800);
+  }
+  async function copyLink(btn, msg) {
+    let ok = false;
+    try { await navigator.clipboard.writeText(SHARE_URL); ok = true; }
+    catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = SHARE_URL; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
+      ta.remove();
+    }
+    if (!ok) return false;
+    if (btn && btn.dataset.share === 'copy') {
+      btn.classList.add('done');
+      setTimeout(() => btn.classList.remove('done'), 1800);
+    }
+    showToast(msg || 'ბმული დაკოპირებულია');
+    return true;
+  }
+  const isAbort = (e) => e && e.name === 'AbortError';        // user closed the share sheet — not an error
+  async function nativeShare(withFile) {
+    const data = { title: SHARE_TITLE, text: SHARE_TITLE, url: SHARE_URL };
+    if (withFile) {
+      const file = await prepareShareFile();
+      if (file && navigator.canShare({ files: [file] })) { data.files = [file]; data.text = `${SHARE_TITLE} ${SHARE_URL}`; }
+    }
+    try { await navigator.share(data); } catch (e) { if (!isAbort(e)) throw e; }
+  }
+  const openWindow = (url) => window.open(url, '_blank', 'noopener,noreferrer,width=640,height=680');
+
+  shareActions.forEach(btn => btn.addEventListener('click', async () => {
+    const act = btn.dataset.share;
+    try {
+      if (act === 'whatsapp') { openWindow(`https://wa.me/?text=${encodeURIComponent(`${SHARE_TITLE} ${SHARE_URL}`)}`); setShareOpen(false); }
+      else if (act === 'facebook') { openWindow(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(SHARE_URL)}`); setShareOpen(false); }
+      else if (act === 'copy') { await copyLink(btn); }
+      else if (act === 'more') { await nativeShare(canShareFiles); }
+      else if (act === 'instagram') {
+        if (canShareFiles) {
+          await nativeShare(true);                         // share sheet with the Zoommer image → pick Instagram
+        } else {
+          // Instagram has no web share link: copy the product link and save the Zoommer image to post it.
+          const copied = await copyLink(btn, 'ბმული დაკოპირებულია · სურათი შენახულია');
+          const file = await makeShareImage(1080, 1350);
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(file);
+          a.download = 'iphone-17-pro-max-zoommer.jpg';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+          if (!copied) showToast('სურათი შენახულია');
+        }
+      }
+    } catch (e) {
+      console.warn('share failed', e);
+      showToast('გაზიარება ვერ მოხერხდა');
+    }
+  }));
   relayout();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { lineWidthPer100 = 0; relayout(); });
 
