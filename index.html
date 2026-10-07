@@ -9,27 +9,105 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  /* ── Theme tokens. Dark is the default; [data-theme="light"] overrides. ── */
   :root {
+    --theme-dur: 240ms;
     --fg: #ecedf0;
     --muted: rgba(236, 237, 240, 0.55);
     --panel: rgba(30, 32, 37, 0.58);
     --line: rgba(255, 255, 255, 0.09);
-    --hover: rgba(255, 255, 255, 0.07);
-    --active: rgba(255, 255, 255, 0.14);
     --accent: #8fb0ff;
+    /* Shared glass material (control bar + theme switch) */
+    --glass-bg: rgba(26, 28, 33, 0.52);
+    --glass-border: rgba(255, 255, 255, 0.13);
+    --glass-filter: blur(20px) saturate(150%);
+    --glass-shadow: 0 12px 36px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    --ctl-icon: rgba(236, 237, 240, 0.62);
+    --ctl-icon-hover: #f4f5f7;
+    --ctl-hover-bg: rgba(255, 255, 255, 0.08);
+    --ctl-active-bg: #eceef2;
+    --ctl-active-icon: #15171c;
+    --ctl-active-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    --sep: rgba(255, 255, 255, 0.16);
+    /* Zoom slider */
+    --track: rgba(255, 255, 255, 0.12);
+    --tick: rgba(255, 255, 255, 0.2);
+    --tick-zero: rgba(255, 255, 255, 0.55);
+    --num: rgba(255, 255, 255, 0.035);
+    --num-active: rgba(255, 255, 255, 0.06);
+    --swatch-border: rgba(255, 255, 255, 0.25);
+    --ring-gap: #121316;
+    --ring: rgba(255, 255, 255, 0.85);
+    --spinner: rgba(255, 255, 255, 0.85);
+    --spinner-track: rgba(255, 255, 255, 0.14);
+    --page-bg:
+      radial-gradient(60% 45% at 50% 42%, rgba(120, 130, 155, 0.16) 0%, rgba(0, 0, 0, 0) 70%),
+      radial-gradient(130% 95% at 50% 40%, #2a2c31 0%, #18191c 50%, #0b0c0e 100%);
+    --page-bg-light:
+      radial-gradient(60% 45% at 50% 42%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 70%),
+      radial-gradient(130% 95% at 50% 40%, #f5f6f8 0%, #e5e7eb 55%, #d3d6dc 100%);
+    color-scheme: dark;
+  }
+  :root[data-theme="light"] {
+    --fg: #1b1d22;
+    --muted: rgba(27, 29, 34, 0.55);
+    --panel: rgba(255, 255, 255, 0.5);
+    --line: rgba(20, 22, 28, 0.08);
+    --accent: #3d6bff;
+    --glass-bg: rgba(255, 255, 255, 0.5);
+    --glass-border: rgba(255, 255, 255, 0.8);
+    --glass-shadow: 0 12px 36px rgba(28, 34, 48, 0.16), 0 0 0 0.5px rgba(20, 22, 28, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    --ctl-icon: rgba(28, 30, 36, 0.58);
+    --ctl-icon-hover: #14161b;
+    --ctl-hover-bg: rgba(20, 22, 28, 0.06);
+    --ctl-active-bg: #ffffff;
+    --ctl-active-icon: #15171c;
+    --ctl-active-shadow: 0 2px 10px rgba(28, 34, 48, 0.18);
+    --sep: rgba(20, 22, 28, 0.12);
+    --track: rgba(20, 22, 28, 0.1);
+    --tick: rgba(20, 22, 28, 0.22);
+    --tick-zero: rgba(20, 22, 28, 0.6);
+    --num: rgba(20, 22, 28, 0.045);
+    --num-active: rgba(20, 22, 28, 0.07);
+    --swatch-border: rgba(20, 22, 28, 0.18);
+    --ring-gap: #eceef1;
+    --ring: rgba(20, 22, 28, 0.7);
+    --spinner: rgba(20, 22, 28, 0.75);
+    --spinner-track: rgba(20, 22, 28, 0.12);
+    color-scheme: light;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; }
   body {
     color: var(--fg);
-    background:
-      radial-gradient(60% 45% at 50% 42%, rgba(120, 130, 155, 0.16) 0%, rgba(0, 0, 0, 0) 70%),
-      radial-gradient(130% 95% at 50% 40%, #2a2c31 0%, #18191c 50%, #0b0c0e 100%);
+    background: var(--page-bg);
     background-color: #121316;
     font-family: "Noto Sans Georgian", "Segoe UI", system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     user-select: none;
     -webkit-user-select: none;
+    transition: color var(--theme-dur) ease;
+  }
+  /* Light backdrop cross-fades over the dark one (gradients themselves can't be transitioned). */
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1;
+    background: var(--page-bg-light);
+    opacity: 0;
+    transition: opacity var(--theme-dur) ease;
+    pointer-events: none;
+  }
+  :root[data-theme="light"] body::before { opacity: 1; }
+  /* Same glass material for every floating control surface. */
+  .glass {
+    height: 56px;
+    padding: 8px;
+    border-radius: 999px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: var(--glass-filter);
+    -webkit-backdrop-filter: var(--glass-filter);
+    box-shadow: var(--glass-shadow);
+    transition: background-color var(--theme-dur) ease, border-color var(--theme-dur) ease, box-shadow var(--theme-dur) ease;
   }
   #c {
     position: fixed; inset: 0;
@@ -64,69 +142,146 @@
   .swatches button {
     width: 20px; height: 20px; padding: 0;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid var(--swatch-border);
     background: var(--sw);
     cursor: pointer;
     touch-action: manipulation;
     transition: transform 0.2s, box-shadow 0.2s;
   }
   .swatches button:hover { transform: scale(1.1); }
-  .swatches button[aria-pressed="true"] { box-shadow: 0 0 0 2px #121316, 0 0 0 3.5px rgba(255, 255, 255, 0.85); }
+  .swatches button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ring-gap), 0 0 0 3.5px var(--ring); }
 
+  /* ── Control bar: glass capsule, one row of 40 × 40 icon buttons ── */
   .dock {
     position: fixed;
+    z-index: 5;
     left: 50%;
-    bottom: calc(18px + env(safe-area-inset-bottom));
+    bottom: calc(24px + env(safe-area-inset-bottom));
     transform: translateX(-50%);
-    display: flex; align-items: center; gap: 4px;
-    padding: 5px;
-    max-width: calc(100vw - 32px);
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    backdrop-filter: blur(18px) saturate(140%);
-    -webkit-backdrop-filter: blur(18px) saturate(140%);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+    display: flex; align-items: center; gap: 6px;
+    width: max-content;
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    touch-action: pan-x;
   }
+  .dock::-webkit-scrollbar { display: none; }
+  .dock .group { position: relative; display: flex; align-items: center; gap: 6px; flex: none; }
   .dock button {
+    position: relative; z-index: 1;
+    flex: none;
+    display: grid; place-items: center;
+    width: 40px; height: 40px; padding: 0;
     appearance: none;
     border: 0;
-    background: transparent;
-    color: var(--fg);
-    font: inherit;
-    font-size: 13px;
-    line-height: 1;
-    padding: 10px 14px;
-    border-radius: 11px;
-    cursor: pointer;
-    white-space: nowrap;
-    touch-action: manipulation;
-    transition: background 0.2s, color 0.2s;
-  }
-  .dock button:hover { background: var(--hover); }
-  .dock button.active { background: var(--active); }
-  .dock .sep { width: 1px; align-self: stretch; margin: 6px 4px; background: var(--line); }
-  .dock .toggle { display: inline-flex; align-items: center; gap: 9px; }
-  .dock .toggle .sw {
-    position: relative; width: 28px; height: 16px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.18);
-    transition: background 0.25s;
-    flex: none;
+    background: transparent;
+    color: var(--ctl-icon);
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
   }
-  .dock .toggle .sw::after {
-    content: ""; position: absolute; top: 2px; left: 2px;
-    width: 12px; height: 12px; border-radius: 50%;
-    background: #fff;
-    transition: transform 0.25s;
+  .dock button svg {
+    width: 21px; height: 21px;
+    fill: none; stroke: currentColor; stroke-width: 1.6;
+    stroke-linecap: round; stroke-linejoin: round;
+    pointer-events: none;
   }
-  .dock .toggle[aria-pressed="true"] .sw { background: #4f7cff; }
-  .dock .toggle[aria-pressed="true"] .sw::after { transform: translateX(12px); }
+  .dock button:hover { color: var(--ctl-icon-hover); background: var(--ctl-hover-bg); }
+  .dock button:active { transform: scale(0.94); }
+  /* Selected state: light pill, dark icon */
+  .dock button.active,
+  .dock button[aria-pressed="true"] { color: var(--ctl-active-icon); background: transparent; }
+  .dock button.active:hover { color: var(--ctl-active-icon); background: transparent; }
+  .dock #auto[aria-pressed="true"],
+  .dock #auto[aria-pressed="true"]:hover { color: var(--ctl-active-icon); background: var(--ctl-active-bg); box-shadow: var(--ctl-active-shadow); }
+  /* Segmented control: one light indicator slides between the mutually exclusive views */
+  .dock .seg-ind {
+    position: absolute; left: 0; top: 0; z-index: 0;
+    width: 40px; height: 40px;
+    border-radius: 999px;
+    background: var(--ctl-active-bg);
+    box-shadow: var(--ctl-active-shadow);
+    opacity: 0;
+    transition: transform 0.2s cubic-bezier(0.3, 0.7, 0.2, 1), opacity 0.18s ease, background-color var(--theme-dur) ease;
+    pointer-events: none;
+  }
+  .dock .seg-ind.show { opacity: 1; }
+  .dock .sep { flex: none; width: 1px; height: 24px; margin: 0 2px; background: var(--sep); }
+
+  /* ── Light / Dark switch: same glass capsule as the bar, 96 × 56, sliding 40 px knob ── */
+  .theme-toggle {
+    position: fixed; z-index: 5; left: 0; top: 0;
+    width: 96px;
+    appearance: none;
+    margin: 0;
+    color: var(--ctl-icon);
+    cursor: pointer;
+    touch-action: manipulation;
+    visibility: hidden;            /* shown once JS has measured where it goes */
+  }
+  .theme-toggle.placed { visibility: visible; }
+  .theme-toggle svg {
+    width: 20px; height: 20px;
+    fill: none; stroke: currentColor; stroke-width: 1.6;
+    stroke-linecap: round; stroke-linejoin: round;
+    pointer-events: none;
+  }
+  .theme-toggle .tt-icon {
+    position: absolute; top: 7px; width: 40px; height: 40px;
+    display: grid; place-items: center;
+    opacity: 0.75;
+    transition: opacity 0.2s ease, color var(--theme-dur) ease;
+  }
+  .theme-toggle .tt-icon.sun { left: 7px; }
+  .theme-toggle .tt-icon.moon { left: 47px; }
+  .theme-toggle:hover .tt-icon { opacity: 1; color: var(--ctl-icon-hover); }
+  .theme-toggle .tt-knob {
+    position: absolute; top: 7px; left: 7px;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    color: var(--ctl-active-icon);
+    background: var(--ctl-active-bg);
+    box-shadow: var(--ctl-active-shadow);
+    transform: translateX(0);
+    transition: transform 230ms cubic-bezier(0.3, 0.7, 0.2, 1), background-color var(--theme-dur) ease, box-shadow var(--theme-dur) ease;
+  }
+  .theme-toggle[aria-checked="true"] .tt-knob { transform: translateX(40px); }
+  .theme-toggle:active .tt-knob { width: 44px; }
+  .theme-toggle[aria-checked="true"]:active .tt-knob { transform: translateX(36px); }
+  .theme-toggle .tt-knob svg { position: absolute; transition: opacity 220ms ease, transform 230ms cubic-bezier(0.3, 0.7, 0.2, 1); }
+  .theme-toggle .k-sun { opacity: 1; transform: rotate(0deg) scale(1); }
+  .theme-toggle .k-moon { opacity: 0; transform: rotate(-60deg) scale(0.6); }
+  .theme-toggle[aria-checked="true"] .k-sun { opacity: 0; transform: rotate(60deg) scale(0.6); }
+  .theme-toggle[aria-checked="true"] .k-moon { opacity: 1; transform: rotate(0deg) scale(1); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  :root.theme-stacked .hint { bottom: calc(160px + env(safe-area-inset-bottom)); }
+  .dock button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .tip {
+    position: fixed; z-index: 30; left: 0; top: 0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(20, 21, 25, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f1f2f4;
+    font-size: 12px; line-height: 1.2;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    transform: translate(-50%, calc(-100% + 4px));
+    transition: opacity 0.16s ease, transform 0.16s ease;
+  }
+  .tip.show { opacity: 1; transform: translate(-50%, -100%); }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   .hint {
     position: fixed; left: 50%;
-    bottom: calc(80px + env(safe-area-inset-bottom));
+    bottom: calc(94px + env(safe-area-inset-bottom));
     transform: translateX(-50%);
     font-size: 12px; color: var(--muted);
     white-space: nowrap;
@@ -139,14 +294,15 @@
     position: fixed; inset: 0; z-index: 10;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 16px; padding: 24px; text-align: center;
-    background: radial-gradient(130% 95% at 50% 40%, #2a2c31 0%, #18191c 50%, #0b0c0e 100%);
+    background: var(--page-bg);
     transition: opacity 0.7s;
   }
+  :root[data-theme="light"] #loader, :root[data-theme="light"] #error { background: var(--page-bg-light); }
   #loader.done { opacity: 0; pointer-events: none; }
   .spinner {
     width: 34px; height: 34px; border-radius: 50%;
-    border: 2.5px solid rgba(255, 255, 255, 0.14);
-    border-top-color: rgba(255, 255, 255, 0.85);
+    border: 2.5px solid var(--spinner-track);
+    border-top-color: var(--spinner);
     animation: spin 0.9s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -172,23 +328,23 @@
     transform: translateY(-56%);
     font-size: clamp(84px, 16vh, 132px); font-weight: 300; line-height: 1;
     letter-spacing: -0.04em;
-    color: rgba(255, 255, 255, 0.035);
+    color: var(--num);
     font-variant-numeric: tabular-nums;
     pointer-events: none;
     white-space: nowrap;
     transition: color 0.3s;
   }
-  .zoom.active .zoom-num { color: rgba(255, 255, 255, 0.06); }
+  .zoom.active .zoom-num { color: var(--num-active); }
   .zoom-ticks { position: absolute; left: 4px; top: var(--pad); bottom: var(--pad); width: 16px; pointer-events: none; }
   .zoom-ticks i {
     position: absolute; left: 0; height: 2px; width: 8px; margin-top: -1px;
     border-radius: 1px;
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--tick);
     transition: background 0.15s;
   }
   .zoom-ticks i.major { width: 14px; }
   .zoom-ticks i.on { background: var(--accent-b); }
-  .zoom-ticks i.zero { background: rgba(255, 255, 255, 0.55); }
+  .zoom-ticks i.zero { background: var(--tick-zero); }
   .zoom-hit {
     position: absolute; left: 20px; width: 50px;
     top: var(--pad); bottom: var(--pad);
@@ -200,7 +356,7 @@
     position: absolute; left: 50%; top: 0; bottom: 0;
     width: 10px; margin-left: -5px;
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.12);
+    background: var(--track);
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
   }
   .zoom-fill {
@@ -250,21 +406,21 @@
   }
 
   @media (max-width: 640px) {
-    .dock {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      width: calc(100vw - 32px);
-    }
-    .dock .sep { display: none; }
-    .dock .toggle { grid-column: 1 / -1; justify-content: center; }
-    .dock button { padding: 11px 8px; }
-    .hint { bottom: calc(150px + env(safe-area-inset-bottom)); font-size: 11px; }
+    .hint { font-size: 11px; }
     header h1 { font-size: 14px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .spinner { animation-duration: 2.5s; }
   }
 </style>
+<script>
+  // Apply the saved theme before first paint (no flash). Dark is the default.
+  (function () {
+    var t = 'dark';
+    try { if (localStorage.getItem('iphone3d-theme') === 'light') t = 'light'; } catch (e) {}
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <script type="importmap">
 {
   "imports": {
@@ -303,14 +459,66 @@
 
 <div class="hint" id="hint">გადაათრიეთ დასატრიალებლად · მასშტაბი: ბორბალი ან ორი თითი</div>
 
-<nav class="dock" aria-label="ხედები">
-  <button data-view="front">წინა ხედი</button>
-  <button data-view="back">უკანა ხედი</button>
-  <button data-view="side">გვერდითი ხედი</button>
-  <button data-view="home" class="active">საწყისი ხედი</button>
+<nav class="dock glass" id="dock" aria-label="მართვის პანელი">
+  <div class="group seg" role="group" aria-label="ხედები">
+    <span class="seg-ind" id="seg-ind" aria-hidden="true"></span>
+    <button data-view="front" data-tip="წინა ხედი" aria-label="წინა ხედი" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="6.5" y="2.5" width="11" height="19" rx="2.8"/>
+        <rect x="8.3" y="4.3" width="7.4" height="15.4" rx="1.5" stroke-width="1.1" opacity="0.55"/>
+        <rect x="10.6" y="5.5" width="2.8" height="1.1" rx="0.55" fill="currentColor" stroke="none"/>
+      </svg>
+    </button>
+    <button data-view="back" data-tip="უკანა ხედი" aria-label="უკანა ხედი" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="6.5" y="2.5" width="11" height="19" rx="2.8"/>
+        <circle cx="9.6" cy="6.3" r="1.25"/>
+        <circle cx="9.6" cy="9.6" r="1.25"/>
+        <circle cx="12.5" cy="7.95" r="1.25"/>
+        <circle cx="15" cy="6" r="0.5" fill="currentColor" stroke="none"/>
+      </svg>
+    </button>
+    <button data-view="side" data-tip="გვერდითი ხედი" aria-label="გვერდითი ხედი" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="9.6" y="2.5" width="4.8" height="19" rx="2.2"/>
+        <path d="M16.3 7.2v3.4" stroke-width="2"/>
+        <path d="M16.3 14.2v2.6" stroke-width="2"/>
+      </svg>
+    </button>
+    <button data-view="home" class="active" data-tip="საწყისი ხედი" aria-label="საწყისი ხედი" aria-pressed="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7.6 4.5 14.4 3a1 1 0 0 1 1.2 1v16a1 1 0 0 1-1.2 1l-6.8-1.5a1.4 1.4 0 0 1-1.1-1.4V5.9a1.4 1.4 0 0 1 1.1-1.4Z"/>
+        <path d="M15.6 4.1 17.6 5.3v13.4l-2 1.2"/>
+        <path d="m9.7 5.9 2.6-.55" stroke-width="1.3"/>
+      </svg>
+    </button>
+  </div>
   <span class="sep" aria-hidden="true"></span>
-  <button class="toggle" id="auto" aria-pressed="true"><span class="sw" aria-hidden="true"></span>ავტობრუნვა</button>
+  <div class="group">
+    <button id="auto" data-tip="ავტობრუნვა" aria-label="ავტობრუნვა" aria-pressed="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="9.6" y="7.2" width="4.8" height="9.6" rx="1.3"/>
+        <path d="M4.7 9.3A7.8 7.8 0 0 1 18 7"/>
+        <path d="M18 7V4.4M18 7h-2.6"/>
+        <path d="M19.3 14.7A7.8 7.8 0 0 1 6 17"/>
+        <path d="M6 17v2.6M6 17h2.6"/>
+      </svg>
+    </button>
+  </div>
 </nav>
+<button class="glass theme-toggle" id="theme" role="switch" aria-checked="true" aria-label="მუქი რეჟიმი" data-tip="ღია რეჟიმი">
+  <span class="tt-icon sun" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.6"/><path d="M12 3.2v1.9M12 18.9v1.9M3.2 12h1.9M18.9 12h1.9M5.8 5.8l1.3 1.3M16.9 16.9l1.3 1.3M5.8 18.2l1.3-1.3M16.9 7.1l1.3-1.3"/></svg>
+  </span>
+  <span class="tt-icon moon" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><path d="M19.2 14.6A7.6 7.6 0 0 1 9.4 4.8a7.6 7.6 0 1 0 9.8 9.8Z"/></svg>
+  </span>
+  <span class="tt-knob" aria-hidden="true">
+    <svg class="k-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.6"/><path d="M12 3.2v1.9M12 18.9v1.9M3.2 12h1.9M18.9 12h1.9M5.8 5.8l1.3 1.3M16.9 16.9l1.3 1.3M5.8 18.2l1.3-1.3M16.9 7.1l1.3-1.3"/></svg>
+    <svg class="k-moon" viewBox="0 0 24 24"><path d="M19.2 14.6A7.6 7.6 0 0 1 9.4 4.8a7.6 7.6 0 1 0 9.8 9.8Z"/></svg>
+  </span>
+</button>
+<div class="tip" id="tip" role="tooltip" aria-hidden="true"></div>
 
 <div id="loader" role="status" aria-live="polite">
   <div class="spinner" aria-hidden="true"></div>
@@ -562,22 +770,6 @@ async function main() {
     g.addColorStop(1, 'rgba(0,0,0,0.45)');
     x.fillStyle = g; x.fillRect(0, 0, cw, ch);
 
-    // Lock-screen typography.
-    x.fillStyle = 'rgba(255,255,255,0.94)';
-    x.textAlign = 'center';
-    x.textBaseline = 'alphabetic';
-    // Georgian date built by hand — not every browser ships Intl data for 'ka'.
-    const now = new Date();
-    const WD = ['კვირა', 'ორშაბათი', 'სამშაბათი', 'ოთხშაბათი', 'ხუთშაბათი', 'პარასკევი', 'შაბათი'];
-    const MO = ['იანვარი', 'თებერვალი', 'მარტი', 'აპრილი', 'მაისი', 'ივნისი', 'ივლისი', 'აგვისტო', 'სექტემბერი', 'ოქტომბერი', 'ნოემბერი', 'დეკემბერი'];
-    const dateStr = `${WD[now.getDay()]}, ${now.getDate()} ${MO[now.getMonth()]}`;
-    x.font = `500 ${Math.round(cw * 0.046)}px "Noto Sans Georgian", "Segoe UI", system-ui, sans-serif`;
-    x.fillStyle = 'rgba(255,255,255,0.82)';
-    x.fillText(dateStr, cw / 2, ch * 0.105);
-    x.fillStyle = 'rgba(255,255,255,0.95)';
-    x.font = `600 ${Math.round(cw * 0.25)}px "SF Pro Display", "Helvetica Neue", "Segoe UI", system-ui, sans-serif`;
-    x.fillText('9:41', cw / 2, ch * 0.225);
-
     // Status icons (right of the Dynamic Island).
     const sy = (1.9 + 3.05) * mm;
     x.fillStyle = 'rgba(255,255,255,0.95)';
@@ -605,9 +797,44 @@ async function main() {
     x.fillStyle = 'rgba(255,255,255,0.9)';
     x.beginPath(); x.roundRect(cw * 0.32, ch - 2.2 * mm, cw * 0.36, 0.55 * mm, 0.3 * mm); x.fill();
 
-    const tex = new THREE.CanvasTexture(c);
+    // Everything above is the static wallpaper (`c`). The lock-screen date and time are composited on top
+    // from the viewer's own system clock and refreshed on every minute change.
+    const out = document.createElement('canvas');
+    out.width = cw; out.height = ch;
+    const o = out.getContext('2d');
+    const tex = new THREE.CanvasTexture(out);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+    // Georgian names built by hand — not every browser ships Intl data for 'ka'.
+    const WD = ['კვირა', 'ორშაბათი', 'სამშაბათი', 'ოთხშაბათი', 'ხუთშაბათი', 'პარასკევი', 'შაბათი'];
+    const MO = ['იანვარი', 'თებერვალი', 'მარტი', 'აპრილი', 'მაისი', 'ივნისი', 'ივლისი', 'აგვისტო', 'სექტემბერი', 'ოქტომბერი', 'ნოემბერი', 'დეკემბერი'];
+    let shownMinute = '';
+    function paintClock(force) {
+      const now = new Date();
+      const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const dateStr = `${WD[now.getDay()]}, ${now.getDate()} ${MO[now.getMonth()]}`;
+      const key = dateStr + ' ' + timeStr;
+      if (!force && key === shownMinute) return;
+      shownMinute = key;
+      o.clearRect(0, 0, cw, ch);
+      o.drawImage(c, 0, 0);
+      o.textAlign = 'center';
+      o.textBaseline = 'alphabetic';
+      o.font = `500 ${Math.round(cw * 0.046)}px "Noto Sans Georgian", "Segoe UI", system-ui, sans-serif`;
+      o.fillStyle = 'rgba(255,255,255,0.82)';
+      o.fillText(dateStr, cw / 2, ch * 0.105);
+      o.font = `600 ${Math.round(cw * 0.25)}px "SF Pro Display", "Helvetica Neue", "Segoe UI", system-ui, sans-serif`;
+      o.fillStyle = 'rgba(255,255,255,0.95)';
+      o.fillText(timeStr, cw / 2, ch * 0.225);
+      tex.needsUpdate = true;
+    }
+    paintClock(true);
+    const scheduleTick = () => setTimeout(() => { paintClock(false); scheduleTick(); }, 60000 - (Date.now() % 60000) + 40);
+    scheduleTick();
+    // Timers are throttled in background tabs, so re-check whenever the page becomes visible again.
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) paintClock(false); });
+    window.addEventListener('focus', () => paintClock(false));
     return tex;
   }
 
@@ -1031,7 +1258,103 @@ float antennaMask() {
     autoBtn.setAttribute('aria-pressed', String(on));
   }
   setAuto(autoRotate);
-  function setActive(name) { viewBtns.forEach(b => b.classList.toggle('active', b.dataset.view === name)); }
+  // Segmented view control: the light indicator slides to the selected view; hidden when the user rotates freely.
+  const segInd = document.getElementById('seg-ind');
+  function setActive(name) {
+    let sel = null;
+    viewBtns.forEach(b => {
+      const on = b.dataset.view === name;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', String(on));
+      if (on) sel = b;
+    });
+    if (sel) segInd.style.transform = `translateX(${sel.offsetLeft}px)`;
+    segInd.classList.toggle('show', !!sel);
+  }
+  setActive('home');
+
+  // Tooltips: one shared bubble positioned above the hovered / keyboard-focused button
+  // (fixed-position, so the bar's horizontal scroll can't clip it).
+  const dockEl = document.getElementById('dock');
+  const tipEl = document.getElementById('tip');
+  let tipFor = null;
+  function showTip(btn) {
+    tipFor = btn;
+    tipEl.textContent = btn.dataset.tip;
+    const r = btn.getBoundingClientRect();
+    tipEl.style.left = (r.left + r.width / 2) + 'px';
+    tipEl.style.top = (r.top - 10) + 'px';
+    tipEl.classList.add('show');
+  }
+  function hideTip(btn) {
+    if (btn && btn !== tipFor) return;
+    tipFor = null;
+    tipEl.classList.remove('show');
+  }
+  const themeBtn = document.getElementById('theme');
+  for (const host of [dockEl, themeBtn]) {
+    host.addEventListener('pointerover', (e) => {
+      const b = e.target.closest('[data-tip]');
+      if (b && e.pointerType !== 'touch') showTip(b);
+    });
+    host.addEventListener('pointerout', (e) => {
+      const b = e.target.closest('[data-tip]');
+      if (b && !b.contains(e.relatedTarget)) hideTip(b);
+    });
+    host.addEventListener('focusin', (e) => {
+      const b = e.target.closest('[data-tip]');
+      if (b && b.matches(':focus-visible')) showTip(b);
+    });
+    host.addEventListener('focusout', (e) => hideTip(e.target.closest('[data-tip]')));
+  }
+  dockEl.addEventListener('scroll', () => hideTip(), { passive: true });
+
+  // ── Light / Dark mode
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  function applyTheme(t, persist) {
+    const dark = t !== 'light';
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    themeBtn.setAttribute('aria-checked', String(dark));
+    themeBtn.dataset.tip = dark ? 'ღია რეჟიმი' : 'მუქი რეჟიმი';
+    if (tipFor === themeBtn) showTip(themeBtn);
+    if (themeMeta) themeMeta.setAttribute('content', dark ? '#121316' : '#e9ebee');
+    if (persist) { try { localStorage.setItem('iphone3d-theme', dark ? 'dark' : 'light'); } catch (e) { /* storage unavailable */ } }
+  }
+  applyTheme(document.documentElement.getAttribute('data-theme'), false);
+  themeBtn.addEventListener('click', () => {
+    applyTheme(themeBtn.getAttribute('aria-checked') === 'true' ? 'light' : 'dark', true);
+  });
+
+  // Place the switch exactly midway between the bar's right edge and the zoom slider's left edge,
+  // vertically centred on the bar. If that gap is too narrow (phones), stack it centred above the bar.
+  const zoomBox = document.getElementById('zoom');
+  function placeThemeToggle() {
+    const bar = dockEl.getBoundingClientRect();
+    const zr = zoomBox.getBoundingClientRect();
+    const w = themeBtn.offsetWidth, h = themeBtn.offsetHeight;
+    const gap = zr.left - bar.right;
+    let left, top;
+    const stacked = gap < w + 24;
+    if (!stacked) {
+      left = bar.right + (gap - w) / 2;
+      top = bar.top + (bar.height - h) / 2;
+    } else {
+      left = (window.innerWidth - w) / 2;
+      top = bar.top - 12 - h;
+    }
+    themeBtn.style.left = left + 'px';
+    themeBtn.style.top = top + 'px';
+    document.documentElement.classList.toggle('theme-stacked', stacked);
+    themeBtn.classList.add('placed');
+  }
+  placeThemeToggle();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeThemeToggle);
+
+  window.addEventListener('resize', () => {
+    hideTip();
+    setActive(viewBtns.find(b => b.classList.contains('active'))?.dataset.view ?? null);
+    placeThemeToggle();
+  });
 
   // ── Zoom slider: level −3 (farthest) … 0 (default framing) … +3 (closest).
   // Level ↔ zoom factor is exponential, so each step feels the same; it stays in sync with wheel / pinch / keys.
